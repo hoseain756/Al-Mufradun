@@ -118,6 +118,68 @@ class PrayerTimeProvider with ChangeNotifier {
     return DateFormat('hh:mm a').format(time);
   }
 
+  // ── Next Prayer (Change 6) ──────────────────────────────
+
+  /// Returns the key of the next upcoming prayer (e.g. 'dhuhr'), or null
+  /// if prayer times have not been calculated yet.
+  ///
+  /// If all prayers for today have passed, returns the first prayer
+  /// (Fajr) as the "next" prayer for tomorrow.
+  String? get nextPrayerKey {
+    if (_prayerTimes.values.every((t) => t == null)) return null;
+
+    final now = DateTime.now();
+    // Ordered prayer keys matching the daily sequence
+    const order = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+    for (final key in order) {
+      final time = _prayerTimes[key];
+      if (time != null && time.isAfter(now)) {
+        return key;
+      }
+    }
+
+    // All prayers have passed today; next prayer is tomorrow's Fajr
+    return 'fajr';
+  }
+
+  /// Arabic name for the next upcoming prayer, or null.
+  String? get nextPrayerNameAr {
+    final key = nextPrayerKey;
+    if (key == null) return null;
+    return prayers.firstWhere((p) => p.key == key).nameAr;
+  }
+
+  /// Duration until the next prayer. Returns null if times are unavailable.
+  ///
+  /// If the next prayer is tomorrow's Fajr, calculates the time until
+  /// tomorrow's Fajr using the Adhan library for correct astronomical times.
+  Duration? get timeUntilNextPrayer {
+    final key = nextPrayerKey;
+    if (key == null) return null;
+
+    final now = DateTime.now();
+    final todayTime = _prayerTimes[key];
+
+    if (todayTime != null && todayTime.isAfter(now)) {
+      return todayTime.difference(now);
+    }
+
+    // Next prayer is tomorrow — compute tomorrow's Fajr
+    if (_lastCoordinates != null && _lastCalculationParams != null) {
+      final tomorrow = now.add(const Duration(days: 1));
+      final tomorrowTimes = PrayerTimes(
+        _lastCoordinates!,
+        DateComponents.from(tomorrow),
+        _lastCalculationParams!,
+      );
+      final tomorrowFajr = tomorrowTimes.fajr;
+      return tomorrowFajr.difference(now);
+    }
+
+    return null;
+  }
+
   // ── Initialization ───────────────────────────────────────
 
   PrayerTimeProvider({bool autoInitialize = true}) {
@@ -342,6 +404,9 @@ class PrayerTimeProvider with ChangeNotifier {
   /// Schedules a rolling window of one-shot notifications.
   ///
   /// Prayer times change day by day, so each alarm must use its own date.
+  /// Scheduling is batched: notifications are prepared in memory first, then
+  /// scheduled concurrently in small batches to avoid blocking the UI thread
+  /// and to stay within OS-level scheduling limits.
   Future<void> _scheduleNotification(
     PrayerInfo prayer,
     Coordinates coordinates,
@@ -351,6 +416,10 @@ class PrayerTimeProvider with ChangeNotifier {
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduledCount = 0;
+
+    // Batch size: schedule N at a time to avoid overwhelming the notification system
+    const batchSize = 30;
+    final futures = <Future<bool>>[];
 
     for (int i = 0; i < scheduleDaysAhead; i++) {
       final date = now.add(Duration(days: i));
@@ -372,20 +441,32 @@ class PrayerTimeProvider with ChangeNotifier {
 
       final uniqueId = (prayer.notificationId * 1000) + i;
 
-      final scheduled =
-          await NotificationService.instance.schedulePrayerNotification(
-        id: uniqueId,
-        title: 'حان وقت صلاة ${prayer.nameAr}',
-        body:
-            '${prayer.nameAr} - ${DateFormat('hh:mm a').format(scheduledDate)}',
-        prayerTime: scheduledDate,
+      futures.add(
+        NotificationService.instance.schedulePrayerNotification(
+          id: uniqueId,
+          title: 'حان وقت صلاة ${prayer.nameAr}',
+          body:
+              '${prayer.nameAr} - ${DateFormat('hh:mm a').format(scheduledDate)}',
+          prayerTime: scheduledDate,
+        ),
       );
 
-      if (scheduled) scheduledCount++;
+      // Flush batch
+      if (futures.length >= batchSize) {
+        final results = await Future.wait(futures);
+        scheduledCount += results.where((r) => r).length;
+        futures.clear();
+      }
+    }
+
+    // Flush remaining
+    if (futures.isNotEmpty) {
+      final results = await Future.wait(futures);
+      scheduledCount += results.where((r) => r).length;
     }
 
     debugPrint(
-      '🔔 Scheduled $scheduledCount days of ${prayer.nameEn} notifications.',
+      'Scheduled $scheduledCount days of ${prayer.nameEn} notifications.',
     );
   }
 

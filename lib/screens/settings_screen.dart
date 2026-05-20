@@ -72,36 +72,58 @@ class SettingsScreen extends StatelessWidget {
                 ),
 
                 // ── Theme Mode Section ────────────────────
-                // M3: Filled Card
+                // M3: Filled Card with SegmentedButton for system/light/dark
                 Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: SwitchListTile(
-                      title: Text(
-                        'الوضع الليلي',
-                        style: textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onSurface,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              provider.themeMode == ThemeMode.dark
+                                  ? OctIcons.moon
+                                  : provider.themeMode == ThemeMode.light
+                                      ? OctIcons.sun
+                                      : OctIcons.gear,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'المظهر',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      subtitle: Text(
-                        provider.themeMode == ThemeMode.dark
-                            ? 'مُفعّل'
-                            : 'غير مُفعّل',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme
-                              .onSurfaceVariant, // M3: onSurfaceVariant
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<ThemeMode>(
+                            segments: const [
+                              ButtonSegment(
+                                value: ThemeMode.system,
+                                label: Text('تلقائي'),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.light,
+                                label: Text('فاتح'),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.dark,
+                                label: Text('داكن'),
+                              ),
+                            ],
+                            selected: {provider.themeMode},
+                            onSelectionChanged: (selected) {
+                              provider.setThemeMode(selected.first);
+                            },
+                          ),
                         ),
-                      ),
-                      secondary: Icon(
-                        provider.themeMode == ThemeMode.dark
-                            ? OctIcons.moon
-                            : OctIcons.sun,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      value: provider.themeMode == ThemeMode.dark,
-                      onChanged: (_) => provider.toggleTheme(),
-                      // M3: Switch uses theme switchTheme
+                      ],
                     ),
                   ),
                 ),
