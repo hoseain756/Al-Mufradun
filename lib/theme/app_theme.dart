@@ -164,6 +164,44 @@ class AppTheme {
         showDragHandle: false, // we handle this manually
       ),
 
+      // ── M3 NavigationBar Theme ─────────────────────────
+      navigationBarTheme: NavigationBarThemeData(
+        height: 80,
+        elevation: 2,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        indicatorColor: colorScheme.secondaryContainer,
+        indicatorShape: const StadiumBorder(),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(
+              color: colorScheme.onSecondaryContainer,
+              size: 24,
+            );
+          }
+          return IconThemeData(
+            color: colorScheme.onSurfaceVariant,
+            size: 24,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+              height: 1.33,
+            );
+          }
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: colorScheme.onSurfaceVariant,
+            height: 1.33,
+          );
+        }),
+      ),
+
       // ── M3 Divider Theme ────────────────────────────────
       dividerTheme: DividerThemeData(
         color: colorScheme.outlineVariant, // M3: outlineVariant
@@ -314,6 +352,44 @@ class AppTheme {
         ),
         dragHandleColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
         showDragHandle: false,
+      ),
+
+      // ── M3 NavigationBar Theme ─────────────────────────
+      navigationBarTheme: NavigationBarThemeData(
+        height: 80,
+        elevation: 2,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        indicatorColor: colorScheme.secondaryContainer,
+        indicatorShape: const StadiumBorder(),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(
+              color: colorScheme.onSecondaryContainer,
+              size: 24,
+            );
+          }
+          return IconThemeData(
+            color: colorScheme.onSurfaceVariant,
+            size: 24,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+              height: 1.33,
+            );
+          }
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: colorScheme.onSurfaceVariant,
+            height: 1.33,
+          );
+        }),
       ),
 
       // ── M3 Divider Theme ────────────────────────────────

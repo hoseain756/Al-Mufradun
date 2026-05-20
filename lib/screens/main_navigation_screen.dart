@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../theme/app_icons.dart';
 
 import 'favorites_screen.dart';
@@ -37,18 +39,28 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _buildCurrentPage(),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        child: KeyedSubtree(
+          key: ValueKey(_index),
+          child: _buildCurrentPage(),
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
-        height: 70,
         selectedIndex: _index,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         onDestinationSelected: (value) {
+          if (value != 2) {
+            context.read<AppProvider>().clearSearch();
+          }
           setState(() => _index = value);
         },
         destinations: const [
           NavigationDestination(
             icon: Icon(OctIcons.location),
-            selectedIcon: Icon(OctIcons.location),
+            selectedIcon: Icon(OctIcons.location_fill),
             label: 'القبلة',
           ),
           NavigationDestination(
@@ -58,17 +70,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
           NavigationDestination(
             icon: Icon(OctIcons.home),
-            selectedIcon: Icon(OctIcons.home),
+            selectedIcon: Icon(OctIcons.home_fill),
             label: 'الرئيسية',
           ),
           NavigationDestination(
             icon: Icon(OctIcons.clock),
-            selectedIcon: Icon(OctIcons.clock),
+            selectedIcon: Icon(OctIcons.clock_fill),
             label: 'الآذان',
           ),
           NavigationDestination(
             icon: Icon(OctIcons.gear),
-            selectedIcon: Icon(OctIcons.gear),
+            selectedIcon: Icon(OctIcons.gear_fill),
             label: 'الإعدادات',
           ),
         ],

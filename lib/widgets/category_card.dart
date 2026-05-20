@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../theme/app_icons.dart';
 
 class CategoryCard extends StatelessWidget {
@@ -38,23 +40,22 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<AppProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final icon = _getCategoryIcon(category);
     final iconColor = _getCategoryColor(context, category);
+    final progress = provider.getCategoryProgress(category);
 
-    // M3: Filled Card with surface tint instead of drop shadow
     return Card(
-      // M3: surfaceContainerLow from theme cardTheme
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        // M3: state layer with splashColor
-        splashColor: iconColor.withValues(alpha: 0.08), // M3: hover 8%
-        highlightColor: iconColor.withValues(alpha: 0.12), // M3: pressed 12%
+        splashColor: iconColor.withValues(alpha: 0.08),
+        highlightColor: iconColor.withValues(alpha: 0.12),
         child: Stack(
           children: [
-            // Decorative background icon (faded)
+            // Decorative background icon
             Positioned(
               right: -10,
               bottom: -10,
@@ -65,12 +66,11 @@ class CategoryCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16.0), // M3: 16dp padding
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // M3: Icon container with primaryContainer-style tint
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -84,17 +84,28 @@ class CategoryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // M3: titleMedium for card titles
                   Text(
                     category,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface, // M3: onSurface
+                      color: colorScheme.onSurface,
                       height: 1.2,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (progress > 0) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 4,
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        color: iconColor,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

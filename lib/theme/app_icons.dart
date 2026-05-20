@@ -31,6 +31,11 @@ class OctIcons {
     fontFamily: _fontFamily,
     fontPackage: _fontPackage,
   );
+  static const IconData clock_fill = IconData(
+    0xfbcb,
+    fontFamily: _fontFamily,
+    fontPackage: _fontPackage,
+  );
   static const IconData cloud = IconData(
     0xec6d,
     fontFamily: _fontFamily,
@@ -56,6 +61,11 @@ class OctIcons {
     fontFamily: _fontFamily,
     fontPackage: _fontPackage,
   );
+  static const IconData gear_fill = IconData(
+    0xfde1,
+    fontFamily: _fontFamily,
+    fontPackage: _fontPackage,
+  );
   static const IconData heart = IconData(
     0xed45,
     fontFamily: _fontFamily,
@@ -71,6 +81,11 @@ class OctIcons {
     fontFamily: _fontFamily,
     fontPackage: _fontPackage,
   );
+  static const IconData home_fill = IconData(
+    0xfcb3,
+    fontFamily: _fontFamily,
+    fontPackage: _fontPackage,
+  );
   static const IconData info = IconData(
     0xed62,
     fontFamily: _fontFamily,
@@ -83,6 +98,11 @@ class OctIcons {
   );
   static const IconData location = IconData(
     0xed80,
+    fontFamily: _fontFamily,
+    fontPackage: _fontPackage,
+  );
+  static const IconData location_fill = IconData(
+    0xfce0,
     fontFamily: _fontFamily,
     fontPackage: _fontPackage,
   );

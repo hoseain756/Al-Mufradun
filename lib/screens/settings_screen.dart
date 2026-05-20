@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_icons.dart';
+import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -24,55 +25,79 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // ── Font Size Section ─────────────────────
-                // M3: Filled Card with surfaceContainerLow
+                // ── Font Size with Slider + Preview ──────────
                 Card(
-                  // M3: Medium shape from theme
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'حجم الخط',
-                          style: textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onSurface, // M3: onSurface
-                          ),
-                        ),
-                        const SizedBox(height: 12),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // M3: Tonal IconButton
-                            IconButton.filledTonal(
-                              icon: const Icon(OctIcons.plus),
-                              tooltip: 'تكبير الخط',
-                              onPressed: () => provider.adjustFontSize(2),
-                            ),
-                            const SizedBox(width: 16),
-                            // M3: Display font size in bodyLarge
                             Text(
-                              provider.fontSize.toStringAsFixed(0),
-                              style: textTheme.titleLarge?.copyWith(
+                              'حجم الخط',
+                              style: textTheme.titleMedium?.copyWith(
                                 color: colorScheme.onSurface,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            // M3: Tonal IconButton
-                            IconButton.filledTonal(
-                              icon: const Icon(OctIcons.dash),
-                              tooltip: 'تصغير الخط',
-                              onPressed: () => provider.adjustFontSize(-2),
+                            Text(
+                              provider.fontSize.toStringAsFixed(0),
+                              style: textTheme.labelLarge?.copyWith(
+                                color: colorScheme.primary,
+                              ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        Slider(
+                          value: provider.fontSize,
+                          min: 14.0,
+                          max: 32.0,
+                          divisions: 9,
+                          label: provider.fontSize.toStringAsFixed(0),
+                          onChanged: (value) {
+                            provider.adjustFontSize(value - provider.fontSize);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // Live preview
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'معاينة',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
+                                style: AppTheme.zekrStyle(
+                                  isQuranicFont: false,
+                                  fontSize: provider.fontSize,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
 
-                // ── Theme Mode Section ────────────────────
-                // M3: Filled Card with SegmentedButton for system/light/dark
+                // ── Theme Mode SegmentedButton ───────────────
                 Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: Padding(
@@ -125,6 +150,97 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                ),
+
+                // ── Reset Dhikr Counters ─────────────────────
+                Card(
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    leading: Icon(OctIcons.sync,
+                        color: colorScheme.onSurfaceVariant),
+                    title: Text(
+                      'إعادة تعيين العدادات',
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'إعادة تعيين جميع عدادات الأذكار',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: Icon(OctIcons.arrow_right,
+                        size: 18, color: colorScheme.onSurfaceVariant),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('إعادة تعيين العدادات'),
+                          content: const Text(
+                            'هل أنت متأكد من إعادة تعيين جميع عدادات الأذكار؟',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('إلغاء'),
+                            ),
+                            FilledButton(
+                              onPressed: () {
+                                provider.resetAllDhikrCounts();
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('تم إعادة تعيين جميع العدادات'),
+                                  ),
+                                );
+                              },
+                              child: const Text('إعادة تعيين'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // ── About ────────────────────────────────────
+                Card(
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    leading: Icon(OctIcons.info,
+                        color: colorScheme.onSurfaceVariant),
+                    title: Text(
+                      'عن التطبيق',
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'الإصدار 1.0.0',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    onTap: () {
+                      showAboutDialog(
+                        context: context,
+                        applicationName: 'المفردون',
+                        applicationVersion: '1.0.0',
+                        applicationIcon: Icon(
+                          OctIcons.book,
+                          size: 48,
+                          color: colorScheme.primary,
+                        ),
+                        children: [
+                          Text(
+                            'تطبيق الأذكار والأدعية اليومية',
+                            style: textTheme.bodyMedium,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ]),

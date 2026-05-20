@@ -19,10 +19,14 @@ class CategoryAdhkarScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final completedCount =
+        adhkarList.where((item) => provider.isDhikrCompleted(item)).length;
+    final totalCount = adhkarList.length;
+    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // M3: Horizontal app bar (icon + title)
           SliverAppBar(
             pinned: true,
             centerTitle: false,
@@ -46,22 +50,71 @@ class CategoryAdhkarScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
+
+          // Progress header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$completedCount من $totalCount مكتمل',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    icon: const Icon(OctIcons.sync, size: 20),
+                    tooltip: 'إعادة تعيين العداد',
+                    onPressed: () {
+                      for (final item in adhkarList) {
+                        provider.resetDhikrCount(item.id);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Adhkar list
           SliverPadding(
-            padding: const EdgeInsets.all(16), // M3: 16dp standard margin
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final item = adhkarList[index];
-                  // M3: AdhkarCard handles its own card styling
                   return AdhkarCard(
                     key: ValueKey(item.id),
                     item: item,
+                    categoryList: adhkarList,
+                    indexInCategory: index,
                   );
                 },
                 childCount: adhkarList.length,
               ),
             ),
           ),
+
+          const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
         ],
       ),
     );

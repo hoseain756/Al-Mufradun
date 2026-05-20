@@ -17,10 +17,14 @@ class FavoritesScreen extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverAppBar(
+          SliverAppBar(
             pinned: true,
             centerTitle: false,
-            title: Text('المفضلة'),
+            title: Text(
+              favorites.isNotEmpty
+                  ? 'المفضلة (${favorites.length})'
+                  : 'المفضلة',
+            ),
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -33,7 +37,6 @@ class FavoritesScreen extends StatelessWidget {
                         Icon(
                           OctIcons.heart,
                           size: 80,
-                          // M3: onSurfaceVariant with reduced opacity
                           color: colorScheme.onSurfaceVariant.withValues(
                             alpha: 0.3,
                           ),

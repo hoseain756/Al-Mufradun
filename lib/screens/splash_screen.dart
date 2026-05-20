@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_icons.dart';
 import 'main_navigation_screen.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -65,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen>
     final appProvider = context.read<AppProvider>();
     final destination = appProvider.onboardingCompleted
         ? const MainNavigationScreen()
-        : const MainNavigationScreen(); // Replace with OnboardingScreen when built
+        : const OnboardingScreen();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(

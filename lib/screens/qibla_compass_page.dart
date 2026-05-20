@@ -431,11 +431,11 @@ class QiblaCompassPainter extends CustomPainter {
       canvas.drawLine(start, end, isMajor ? majorTickPaint : tickPaint);
     }
 
-    // Cardinal Letters (N, S, E, W)
-    _drawText(canvas, center, "N", Offset(center.dx, center.dy - radius + 35));
-    _drawText(canvas, center, "S", Offset(center.dx, center.dy + radius - 35));
-    _drawText(canvas, center, "E", Offset(center.dx + radius - 35, center.dy));
-    _drawText(canvas, center, "W", Offset(center.dx - radius + 35, center.dy));
+    // Cardinal Letters (Arabic: ش=North, ج=South, شر=East, غ=West)
+    _drawText(canvas, center, "ش", Offset(center.dx, center.dy - radius + 35), color: Colors.redAccent);
+    _drawText(canvas, center, "ج", Offset(center.dx, center.dy + radius - 35));
+    _drawText(canvas, center, "شر", Offset(center.dx + radius - 35, center.dy), fontSize: 17);
+    _drawText(canvas, center, "غ", Offset(center.dx - radius + 35, center.dy));
 
     canvas.restore(); // Rose is done
 
@@ -505,13 +505,13 @@ class QiblaCompassPainter extends CustomPainter {
     canvas.drawCircle(center, 7, centerDotBorderPaint);
   }
 
-  void _drawText(Canvas canvas, Offset center, String text, Offset position) {
+  void _drawText(Canvas canvas, Offset center, String text, Offset position, {Color? color, double? fontSize}) {
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
         style: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: 20,
+          color: color ?? colorScheme.onSurface,
+          fontSize: fontSize ?? 20,
           fontWeight: FontWeight.bold,
           shadows: [
             Shadow(
@@ -521,7 +521,7 @@ class QiblaCompassPainter extends CustomPainter {
           ],
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: TextDirection.rtl,
     );
     textPainter.layout();
     textPainter.paint(
