@@ -38,7 +38,18 @@ class AdhkarCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _M3Badge(text: item.category, isPrimary: true),
+                  Expanded(
+                    child: Text(
+                      item.category,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   _DhikrStatusBadge(item: item),
                 ],
               ),
@@ -324,7 +335,18 @@ class _DhikrDetailSheetState extends State<_DhikrDetailSheet>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _M3Badge(text: widget.item.category, isPrimary: true),
+                  Expanded(
+                    child: Text(
+                      widget.item.category,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   _CounterRing(
                     current: _currentCount,
                     target: _targetCount,
@@ -595,7 +617,7 @@ class _DhikrStatusBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          'تم ✓',
+          'مكتمل',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: colorScheme.onTertiaryContainer,
               ),

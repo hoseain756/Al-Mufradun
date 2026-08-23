@@ -1,47 +1,50 @@
 name: adhkar_viewer
 description: A modern Adhkar Viewer application.
-publish_to: 'none'
-version: 1.0.0+1
+publish_to: "none"
+version: 1.0.0+10
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  
+
   # State Management
   provider: ^6.0.5
-  
+
   # Persistence
   shared_preferences: ^2.2.0
-  
+
   # UI & Icons
-  google_fonts: ^6.2.1
   icons_plus: ^5.0.0
-  
+
   # Utilities
-  share_plus: ^7.1.0
-  flutter_svg: ^2.0.7
+  share_plus: ^7.2.2
+  sqflite: ^2.3.0
+  path: ^1.8.0
+  path_provider: ^2.1.0
 
   # Prayer Time Reminders
-  adhan: ^2.0.0+1                    # Offline prayer time calculation
-  geolocator: ^13.0.2                # Device GPS coordinates
-  flutter_qiblah: ^3.1.0+1           # Qibla calculation and compass
-  flutter_local_notifications: ^21.0.0  # Local notification scheduling
-  flutter_timezone: ^5.0.2           # Detect device timezone name
-  timezone: ^0.11.0                   # TZDateTime for zonedSchedule
-  permission_handler: ^11.3.0        # Runtime permission requests
-  intl: ^0.20.2                      # Date formatting
-  workmanager: ^0.9.0+3              # Periodic background refresh for prayer schedules
+  adhan: ^2.0.0+1 # Offline prayer time calculation
+  geolocator: ^13.0.2 # Device GPS coordinates
+  flutter_qiblah: ^3.1.0+1 # Qibla calculation and compass
+  flutter_local_notifications: ^21.0.0 # Local notification scheduling
+  flutter_timezone: ^5.0.2 # Detect device timezone name
+  lat_lng_to_timezone: ^0.2.0 # Offline GPS coordinates -> IANA timezone
+  timezone: ^0.11.0 # TZDateTime for zonedSchedule
+  permission_handler: ^11.3.0 # Runtime permission requests
+  intl: ^0.20.2 # Date formatting
+  workmanager: ^0.9.0+3 # Periodic background refresh for prayer schedules
+  hijri: ^3.0.1
+  change_app_package_name: ^1.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
-  flutter_native_splash: ^2.3.0
   flutter_launcher_icons: ^0.14.3
 
 flutter_launcher_icons:
@@ -49,19 +52,23 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/app_icon.png"
 
-flutter_native_splash:
-  color: "#ffffff"
-  color_dark: "#121212"
-  android: true
-  ios: true
-  android_12:
-    icon_background_color: "#ffffff"
-    icon_background_color_dark: "#121212"
-
 flutter:
   uses-material-design: true
 
   fonts:
+    - family: TheYearofHandicrafts
+      fonts:
+        - asset: assets/fonts/TheYearofHandicrafts/TheYearofHandicrafts-Regular.otf
+          weight: 400
+        - asset: assets/fonts/TheYearofHandicrafts/TheYearofHandicrafts-Medium.otf
+          weight: 500
+        - asset: assets/fonts/TheYearofHandicrafts/TheYearofHandicrafts-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/TheYearofHandicrafts/TheYearofHandicrafts-Bold.otf
+          weight: 700
+        - asset: assets/fonts/TheYearofHandicrafts/TheYearofHandicrafts-Black.otf
+          weight: 900
+
     - family: alnasakh
       fonts:
         - asset: assets/fonts/alnasakh/alnasakh_regular.ttf
@@ -70,8 +77,13 @@ flutter:
 
     - family: UthmanicHafs
       fonts:
-        - asset: assets/fonts/UthmanicHafs/UthmanicHafs_V22.ttf
+        - asset: assets/fonts/UthmanicHafs/uthmanic_hafs_v20.ttf
 
+    - family: ElgharibSurahName
+      fonts:
+        - asset: assets/fonts/Elgharib-SurahName V4.ttf
 
   assets:
     - assets/adhkar.json
+    - assets/db/quran.db
+    - assets/fonts/QCF2BSMLfonts/

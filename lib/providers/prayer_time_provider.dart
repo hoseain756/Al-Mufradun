@@ -1,186 +1,99 @@
 import 'package:adhan/adhan.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-import '../services/notification_service.dart';
+import '../services/prayer_scheduler.dart';
+import '../utils/arabic_time_formatter.dart';
 
-/// Data class representing a single prayer with its metadata.
-class PrayerInfo {
-  final String key; // e.g. 'fajr'
-  final String nameAr; // e.g. 'الفجر'
-  final String nameEn; // e.g. 'Fajr'
-  final int notificationId; // base ID (1–5)
-
-  const PrayerInfo({
-    required this.key,
-    required this.nameAr,
-    required this.nameEn,
-    required this.notificationId,
-  });
-}
-
-enum PrayerScheduleRange {
-  week('week', 'أسبوع', 7),
-  month('month', 'شهر', 30),
-  unlimited('unlimited', 'مطلق (لا محدود)', 365);
-
-  final String storageKey;
-  final String labelAr;
-  final int days;
-
-  const PrayerScheduleRange(this.storageKey, this.labelAr, this.days);
-
-  static PrayerScheduleRange fromStorageKey(String? key) {
-    return PrayerScheduleRange.values.firstWhere(
-      (range) => range.storageKey == key,
-      orElse: () => PrayerScheduleRange.month,
-    );
-  }
-}
-
-/// Provider for prayer time calculation, toggle state, and notification scheduling.
 class PrayerTimeProvider with ChangeNotifier {
-  static const int _maxCancelableScheduleDays = 365;
+  static const List<PrayerInfo> prayers = PrayerScheduler.prayers;
 
-  // ── Static prayer definitions ────────────────────────────
-  static const List<PrayerInfo> prayers = [
-    PrayerInfo(
-      key: 'fajr',
-      nameAr: 'الفجر',
-      nameEn: 'Fajr',
-      notificationId: 1,
-    ),
-    PrayerInfo(
-      key: 'dhuhr',
-      nameAr: 'الظهر',
-      nameEn: 'Dhuhr',
-      notificationId: 2,
-    ),
-    PrayerInfo(
-      key: 'asr',
-      nameAr: 'العصر',
-      nameEn: 'Asr',
-      notificationId: 3,
-    ),
-    PrayerInfo(
-      key: 'maghrib',
-      nameAr: 'المغرب',
-      nameEn: 'Maghrib',
-      notificationId: 4,
-    ),
-    PrayerInfo(
-      key: 'isha',
-      nameAr: 'العشاء',
-      nameEn: 'Isha',
-      notificationId: 5,
-    ),
-  ];
-
-  // ── State ────────────────────────────────────────────────
   final Map<String, bool> _toggleStates = {
-    'fajr': false,
-    'dhuhr': false,
-    'asr': false,
-    'maghrib': false,
-    'isha': false,
+    for (final prayer in PrayerScheduler.prayers) prayer.key: true,
   };
 
   final Map<String, DateTime?> _prayerTimes = {
-    'fajr': null,
-    'dhuhr': null,
-    'asr': null,
-    'maghrib': null,
-    'isha': null,
+    for (final prayer in PrayerScheduler.prayers) prayer.key: null,
   };
 
   bool _isLoading = true;
   String? _errorMessage;
   Coordinates? _lastCoordinates;
   CalculationParameters? _lastCalculationParams;
-  PrayerScheduleRange _scheduleRange = PrayerScheduleRange.month;
+  tz.Location? _lastTimezoneLocation;
 
-  // ── Getters ──────────────────────────────────────────────
   bool isEnabled(String key) => _toggleStates[key] ?? false;
   DateTime? getPrayerTime(String key) => _prayerTimes[key];
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  PrayerScheduleRange get scheduleRange => _scheduleRange;
-  int get scheduleDaysAhead => _scheduleRange.days;
   bool get areAllPrayersEnabled =>
       prayers.every((prayer) => _toggleStates[prayer.key] == true);
 
   String? getFormattedTime(String key) {
     final time = _prayerTimes[key];
     if (time == null) return null;
-    return DateFormat('hh:mm a').format(time);
+    return ArabicTimeFormatter.formatTime(time);
   }
 
-  // ── Next Prayer (Change 6) ──────────────────────────────
-
-  /// Returns the key of the next upcoming prayer (e.g. 'dhuhr'), or null
-  /// if prayer times have not been calculated yet.
-  ///
-  /// If all prayers for today have passed, returns the first prayer
-  /// (Fajr) as the "next" prayer for tomorrow.
   String? get nextPrayerKey {
-    if (_prayerTimes.values.every((t) => t == null)) return null;
+    if (_prayerTimes.values.every((time) => time == null)) return null;
 
-    final now = DateTime.now();
-    // Ordered prayer keys matching the daily sequence
-    const order = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-
-    for (final key in order) {
-      final time = _prayerTimes[key];
-      if (time != null && time.isAfter(now)) {
-        return key;
-      }
+    final now = _lastTimezoneLocation == null
+        ? DateTime.now()
+        : tz.TZDateTime.now(_lastTimezoneLocation!);
+    for (final prayer in prayers) {
+      final time = _prayerTimes[prayer.key];
+      if (time != null && time.isAfter(now)) return prayer.key;
     }
 
-    // All prayers have passed today; next prayer is tomorrow's Fajr
     return 'fajr';
   }
 
-  /// Arabic name for the next upcoming prayer, or null.
   String? get nextPrayerNameAr {
     final key = nextPrayerKey;
     if (key == null) return null;
-    return prayers.firstWhere((p) => p.key == key).nameAr;
+    return prayers.firstWhere((prayer) => prayer.key == key).nameAr;
   }
 
-  /// Duration until the next prayer. Returns null if times are unavailable.
-  ///
-  /// If the next prayer is tomorrow's Fajr, calculates the time until
-  /// tomorrow's Fajr using the Adhan library for correct astronomical times.
   Duration? get timeUntilNextPrayer {
     final key = nextPrayerKey;
     if (key == null) return null;
 
-    final now = DateTime.now();
+    final now = _lastTimezoneLocation == null
+        ? DateTime.now()
+        : tz.TZDateTime.now(_lastTimezoneLocation!);
     final todayTime = _prayerTimes[key];
-
     if (todayTime != null && todayTime.isAfter(now)) {
       return todayTime.difference(now);
     }
 
-    // Next prayer is tomorrow — compute tomorrow's Fajr
-    if (_lastCoordinates != null && _lastCalculationParams != null) {
-      final tomorrow = now.add(const Duration(days: 1));
+    if (_lastCoordinates != null &&
+        _lastCalculationParams != null &&
+        _lastTimezoneLocation != null) {
+      final tomorrow = tz.TZDateTime.now(
+        _lastTimezoneLocation!,
+      ).add(const Duration(days: 1));
       final tomorrowTimes = PrayerTimes(
         _lastCoordinates!,
         DateComponents.from(tomorrow),
         _lastCalculationParams!,
+        utcOffset: tomorrow.timeZoneOffset,
       );
-      final tomorrowFajr = tomorrowTimes.fajr;
+      final tomorrowFajr = tz.TZDateTime(
+        _lastTimezoneLocation!,
+        tomorrowTimes.fajr.year,
+        tomorrowTimes.fajr.month,
+        tomorrowTimes.fajr.day,
+        tomorrowTimes.fajr.hour,
+        tomorrowTimes.fajr.minute,
+        tomorrowTimes.fajr.second,
+      );
       return tomorrowFajr.difference(now);
     }
 
     return null;
   }
-
-  // ── Initialization ───────────────────────────────────────
 
   PrayerTimeProvider({bool autoInitialize = true}) {
     if (autoInitialize) {
@@ -188,20 +101,24 @@ class PrayerTimeProvider with ChangeNotifier {
     }
   }
 
+  /// Public entry point for deferred initialisation.
+  ///
+  /// Call this after timezone, notifications and other platform services are
+  /// fully initialised (e.g. from [SplashScreen]).
+  Future<void> startFetching() => _initialize();
+
   Future<void> _initialize() async {
     await _loadToggleStates();
     await _fetchAndCalculate();
   }
 
   Future<void> _loadToggleStates({bool notify = true}) async {
-    final prefs = await SharedPreferences.getInstance();
-    _scheduleRange = PrayerScheduleRange.fromStorageKey(
-      prefs.getString('prayer_schedule_range'),
-    );
-    for (final prayer in prayers) {
-      _toggleStates[prayer.key] =
-          prefs.getBool('prayer_${prayer.key}') ?? false;
-    }
+    final enabledStates =
+        await PrayerScheduler.instance.loadPrayerEnabledStates();
+    _toggleStates
+      ..clear()
+      ..addAll(enabledStates);
+
     if (notify) notifyListeners();
   }
 
@@ -214,260 +131,65 @@ class PrayerTimeProvider with ChangeNotifier {
     if (notify) notifyListeners();
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _errorMessage = 'خدمات الموقع غير مفعّلة. يرجى تفعيلها.';
-        _isLoading = false;
-        if (notify) notifyListeners();
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied && requestPermissions) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _errorMessage = 'تم رفض إذن الموقع. يرجى السماح بالوصول.';
-          _isLoading = false;
-          if (notify) notifyListeners();
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.denied) {
-        _errorMessage = 'تم رفض إذن الموقع. يرجى السماح بالوصول.';
-        _isLoading = false;
-        if (notify) notifyListeners();
-        return;
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        _errorMessage = 'إذن الموقع مرفوض نهائياً. يرجى تفعيله من الإعدادات.';
-        _isLoading = false;
-        if (notify) notifyListeners();
-        return;
-      }
-
-      Position? position = await Geolocator.getLastKnownPosition();
-      position ??= await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: Duration(seconds: 30),
-        ),
+      final snapshot = await PrayerScheduler.instance.calculateToday(
+        requestPermissions: requestPermissions,
       );
 
-      final coordinates = Coordinates(position.latitude, position.longitude);
-      final params = CalculationMethod.umm_al_qura.getParameters();
-      params.madhab = Madhab.shafi;
-      _lastCoordinates = coordinates;
-      _lastCalculationParams = params;
-      final prayerTimesResult = PrayerTimes.today(coordinates, params);
+      _lastCoordinates = snapshot.coordinates;
+      _lastCalculationParams = snapshot.calculationParameters;
+      _lastTimezoneLocation = snapshot.timezoneLocation;
 
-      _prayerTimes['fajr'] = prayerTimesResult.fajr;
-      _prayerTimes['dhuhr'] = prayerTimesResult.dhuhr;
-      _prayerTimes['asr'] = prayerTimesResult.asr;
-      _prayerTimes['maghrib'] = prayerTimesResult.maghrib;
-      _prayerTimes['isha'] = prayerTimesResult.isha;
-
-      if (requestPermissions) {
-        await NotificationService.instance.requestPermission();
+      for (final entry in snapshot.todayPrayerTimes.entries) {
+        _prayerTimes[entry.key] = entry.value;
       }
 
-      // Reschedule all enabled prayers with accurate daily prayer times.
-      for (final prayer in prayers) {
-        if (_toggleStates[prayer.key] == true) {
-          await _scheduleNotification(prayer, coordinates, params);
-        }
-      }
+      await PrayerScheduler.instance.refreshSchedule(
+        requestPermissions: requestPermissions,
+      );
 
       _isLoading = false;
       _errorMessage = null;
       if (notify) notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error fetching prayer times: $e');
+      debugPrint('Error fetching prayer times: $e');
       _errorMessage = 'حدث خطأ أثناء حساب أوقات الصلاة.';
       _isLoading = false;
       if (notify) notifyListeners();
     }
   }
 
-  // ── Actions ───────────────────────────────────────────────
-
   Future<DateTime?> togglePrayer(String key, bool enabled) async {
     _toggleStates[key] = enabled;
     notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('prayer_$key', enabled);
+    await PrayerScheduler.instance.setPrayerEnabled(key, enabled);
 
-    final prayer = prayers.firstWhere((p) => p.key == key);
+    final prayerTime = _prayerTimes[key];
+    if (!enabled || prayerTime == null) return null;
 
-    if (enabled && _prayerTimes[key] != null) {
-      // 1. Calculate the first scheduled time for the SnackBar
-      final prayerTime = _prayerTimes[key]!;
-      final now = tz.TZDateTime.now(tz.local);
-      var firstScheduled = tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        prayerTime.hour,
-        prayerTime.minute,
-      );
-      if (firstScheduled.isBefore(now)) {
-        firstScheduled = firstScheduled.add(const Duration(days: 1));
-      }
-
-      // 2. Schedule from the already-calculated prayer data without reloading UI.
-      final coordinates = _lastCoordinates;
-      final params = _lastCalculationParams;
-      if (coordinates != null && params != null) {
-        await NotificationService.instance.requestPermission();
-        await _scheduleNotification(prayer, coordinates, params);
-      }
-
-      return firstScheduled;
-    } else {
-      await _cancelPrayerNotifications(prayer);
-      return null;
+    final now = _lastTimezoneLocation == null
+        ? DateTime.now()
+        : tz.TZDateTime.now(_lastTimezoneLocation!);
+    var firstScheduled = prayerTime;
+    if (!firstScheduled.isAfter(now)) {
+      firstScheduled = firstScheduled.add(const Duration(days: 1));
     }
+
+    return firstScheduled;
   }
 
   Future<void> toggleAllPrayers(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
+    final writes = <Future<bool>>[];
+
     for (final prayer in prayers) {
       _toggleStates[prayer.key] = enabled;
-      await prefs.setBool('prayer_${prayer.key}', enabled);
+      writes.add(prefs.setBool('prayer_${prayer.key}', enabled));
     }
+
     notifyListeners();
-
-    if (!enabled) {
-      for (final prayer in prayers) {
-        await _cancelPrayerNotifications(prayer);
-      }
-      return;
-    }
-
-    final coordinates = _lastCoordinates;
-    final params = _lastCalculationParams;
-    if (coordinates == null || params == null) return;
-
-    await NotificationService.instance.requestPermission();
-    for (final prayer in prayers) {
-      await _scheduleNotification(prayer, coordinates, params);
-    }
-  }
-
-  Future<void> setScheduleRange(PrayerScheduleRange range) async {
-    if (_scheduleRange == range) return;
-
-    _scheduleRange = range;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('prayer_schedule_range', range.storageKey);
-    notifyListeners();
-
-    final coordinates = _lastCoordinates;
-    final params = _lastCalculationParams;
-    if (coordinates == null || params == null) return;
-
-    for (final prayer in prayers) {
-      if (_toggleStates[prayer.key] == true) {
-        await _scheduleNotification(prayer, coordinates, params);
-      }
-    }
-  }
-
-  Future<void> _cancelPrayerNotifications(PrayerInfo prayer) async {
-    for (int i = 0; i < _maxCancelableScheduleDays; i++) {
-      await NotificationService.instance.cancelNotification(
-        (prayer.notificationId * 1000) + i,
-      );
-    }
-  }
-
-  DateTime _timeForPrayer(PrayerTimes prayerTimes, String key) {
-    switch (key) {
-      case 'fajr':
-        return prayerTimes.fajr;
-      case 'dhuhr':
-        return prayerTimes.dhuhr;
-      case 'asr':
-        return prayerTimes.asr;
-      case 'maghrib':
-        return prayerTimes.maghrib;
-      case 'isha':
-        return prayerTimes.isha;
-      default:
-        throw ArgumentError('Unknown prayer key: $key');
-    }
-  }
-
-  /// Schedules a rolling window of one-shot notifications.
-  ///
-  /// Prayer times change day by day, so each alarm must use its own date.
-  /// Scheduling is batched: notifications are prepared in memory first, then
-  /// scheduled concurrently in small batches to avoid blocking the UI thread
-  /// and to stay within OS-level scheduling limits.
-  Future<void> _scheduleNotification(
-    PrayerInfo prayer,
-    Coordinates coordinates,
-    CalculationParameters params,
-  ) async {
-    await _cancelPrayerNotifications(prayer);
-
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledCount = 0;
-
-    // Batch size: schedule N at a time to avoid overwhelming the notification system
-    const batchSize = 30;
-    final futures = <Future<bool>>[];
-
-    for (int i = 0; i < scheduleDaysAhead; i++) {
-      final date = now.add(Duration(days: i));
-      final prayerTimes = PrayerTimes(
-        coordinates,
-        DateComponents.from(date),
-        params,
-      );
-      final prayerTime = _timeForPrayer(prayerTimes, prayer.key);
-      final scheduledDate = tz.TZDateTime(
-        tz.local,
-        date.year,
-        date.month,
-        date.day,
-        prayerTime.hour,
-        prayerTime.minute,
-        prayerTime.second,
-      );
-
-      final uniqueId = (prayer.notificationId * 1000) + i;
-
-      futures.add(
-        NotificationService.instance.schedulePrayerNotification(
-          id: uniqueId,
-          title: 'حان وقت صلاة ${prayer.nameAr}',
-          body:
-              '${prayer.nameAr} - ${DateFormat('hh:mm a').format(scheduledDate)}',
-          prayerTime: scheduledDate,
-        ),
-      );
-
-      // Flush batch
-      if (futures.length >= batchSize) {
-        final results = await Future.wait(futures);
-        scheduledCount += results.where((r) => r).length;
-        futures.clear();
-      }
-    }
-
-    // Flush remaining
-    if (futures.isNotEmpty) {
-      final results = await Future.wait(futures);
-      scheduledCount += results.where((r) => r).length;
-    }
-
-    debugPrint(
-      'Scheduled $scheduledCount days of ${prayer.nameEn} notifications.',
-    );
+    await Future.wait(writes);
+    await PrayerScheduler.instance.refreshSchedule();
   }
 
   Future<void> retry() async {

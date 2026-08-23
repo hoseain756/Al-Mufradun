@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../main.dart' show initializeAppServices;
 import '../providers/app_provider.dart';
+import '../providers/prayer_time_provider.dart';
 import '../theme/app_icons.dart';
 import 'main_navigation_screen.dart';
 import 'onboarding_screen.dart';
@@ -18,10 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  /// Minimum time the splash must remain visible (for branding).
-  static const _minSplashDuration = Duration(seconds: 1);
-
-  /// Maximum time before we navigate regardless of data state.
+  /// Maximum time before we navigate regardless of data/services state.
   static const _maxSplashDuration = Duration(seconds: 5);
 
   bool _navigated = false;
@@ -36,26 +35,42 @@ class _SplashScreenState extends State<SplashScreen>
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
 
-    _awaitDataAndNavigate();
+    _initAndNavigate();
   }
 
-  Future<void> _awaitDataAndNavigate() async {
+  /// Sequential startup flow:
+  /// 1. Initialise platform services (timezone, notifications, WorkManager).
+  /// 2. Wait for adhkar data to finish loading in [AppProvider].
+  /// 3. Start prayer-time fetching (safe — services are guaranteed ready).
+  /// 4. Navigate to onboarding or main screen.
+  Future<void> _initAndNavigate() async {
     final appProvider = context.read<AppProvider>();
+    final prayerProvider = context.read<PrayerTimeProvider>();
 
-    // Wait for at least minSplash AND data to be ready, but no longer than maxSplash.
-    final minSplash = Future.delayed(_minSplashDuration);
-    final dataReady = appProvider.initialized;
+    try {
+      // ── Step 1: platform services ──────────────────────────
+      await initializeAppServices();
+    } catch (e) {
+      debugPrint('❌ Services initialisation error: $e');
+    }
 
-    // Wait for both the minimum duration and data to be ready
-    await Future.wait([minSplash, dataReady]).timeout(
-      _maxSplashDuration,
-      onTimeout: () {
-        // Timed out — navigate anyway (will show error state in UI)
-        debugPrint('Splash timeout reached; navigating without data.');
-        return [null, null];
-      },
-    );
+    // ── Step 2: adhkar data ────────────────────────────────
+    try {
+      await appProvider.initialized.timeout(
+        _maxSplashDuration,
+        onTimeout: () {
+          debugPrint('Splash timeout: adhkar data not ready yet.');
+        },
+      );
+    } catch (_) {
+      // Continue even if data timed out; home screen will show error state.
+    }
 
+    // ── Step 3: prayer times (fire-and-forget) ─────────────
+    // Services are fully initialised at this point, so no race condition.
+    prayerProvider.startFetching();
+
+    // ── Step 4: navigate ───────────────────────────────────
     _navigate();
   }
 

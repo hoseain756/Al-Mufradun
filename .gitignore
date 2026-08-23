@@ -1,4 +1,5 @@
 # Miscellaneous
+.dart-appdata/
 *.class
 *.log
 *.pyc

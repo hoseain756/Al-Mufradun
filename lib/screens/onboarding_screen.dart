@@ -11,27 +11,62 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  late final AnimationController _animCtrl;
+
 
   static const _pages = [
     _OnboardingPage(
+      icon: OctIcons.home,
+      title: 'مرحباً بك في المفردون',
+      description: '«سَبَقَ الْمُفَرِّدُونَ» — واحتك الإيمانية المتكاملة لتعطير لسانك بذكر الله في كل وقت وحين',
+    ),
+    _OnboardingPage(
       icon: OctIcons.book,
-      title: 'مرحبا بك في المفردون',
-      description: 'تطبيقك اليومي للأذكار والأدعية النبوية',
+      title: 'القرآن الكريم',
+      description:
+          'القرآن الكريم كاملاً بين يديك بصياغة بصرية مريحة للعين، ممتداً بمميزات تفاعلية تتيح لك مشاركة الآيات الكريمة مع من تحب',
     ),
     _OnboardingPage(
       icon: OctIcons.clock,
-      title: 'مواقيت الصلاة',
-      description: 'تنبيهات تلقائية بأوقات الصلاة حسب موقعك',
+      title: 'مواقيت الصلاة والقبلة',
+      description:
+          'صلاتك عماد دينك؛ تابع مواقيت الصلاة بدقة واعرف اتجاه قبلتك أينما كنت في أرجاء الأرض لتكون دائماً على صلة بخالقك',
     ),
     _OnboardingPage(
-      icon: OctIcons.location,
-      title: 'اتجاه القبلة',
-      description: 'بوصلة دقيقة لتحديد اتجاه القبلة أينما كنت',
+      icon: OctIcons.heart,
+      title: 'الأذكار والأدعية اليومية',
+      description:
+          'حصن مسيرك؛ عطر أنفاسك بأذكار الصباح والمساء ونخبة من الأدعية المأثورة لتجعل قلبك مطمئناً بذكر الله طوال يومك',
+    ),
+    _OnboardingPage(
+      icon: null,
+      title: 'ابدأ رحلتك',
+      description: 'وعلى الله الاتكال — لننطلق في رحاب الطاعة والذكر',
+      isGetStarted: true,
     ),
   ];
+
+  
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animCtrl.dispose();
+    super.dispose();
+  }
 
   void _completeOnboarding() {
     context.read<AppProvider>().completeOnboarding();
@@ -55,11 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +136,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            page.icon,
-                            size: 80,
-                            color: colorScheme.primary,
-                          ),
+                          if (page.icon != null)
+                            Icon(
+                              page.icon,
+                              size: 80,
+                              color: colorScheme.primary,
+                            ),
                           const SizedBox(height: 24),
                           Text(
                             page.title,
@@ -185,13 +217,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _OnboardingPage {
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String description;
+  final bool isGetStarted;
 
   const _OnboardingPage({
-    required this.icon,
+    this.icon,
     required this.title,
     required this.description,
+    this.isGetStarted = false,
   });
 }

@@ -224,21 +224,39 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     onTap: () {
-                      showAboutDialog(
+                      showDialog(
                         context: context,
-                        applicationName: 'المفردون',
-                        applicationVersion: '1.0.0',
-                        applicationIcon: Icon(
-                          OctIcons.book,
-                          size: 48,
-                          color: colorScheme.primary,
-                        ),
-                        children: [
-                          Text(
-                            'تطبيق الأذكار والأدعية اليومية',
-                            style: textTheme.bodyMedium,
+                        builder: (ctx) => AlertDialog(
+                          icon: Icon(
+                            OctIcons.book,
+                            size: 48,
+                            color: colorScheme.primary,
                           ),
-                        ],
+                          title: const Text('المفردون'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'الإصدار 1.0.0',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'تطبيق الأذكار والأدعية اليومية',
+                                style: textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('إغلاق'),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),

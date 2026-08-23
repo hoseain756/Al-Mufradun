@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../features/quran/presentation/screens/quran_index_screen.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_icons.dart';
 
@@ -17,19 +18,23 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _index = 2;
+  static const int _homeIndex = 0;
+
+  int _index = 0;
 
   Widget _buildCurrentPage() {
     switch (_index) {
       case 0:
-        return const QiblaCompassPage();
-      case 1:
-        return const FavoritesScreen();
-      case 2:
         return const HomeScreen();
+      case 1:
+        return QuranIndexScreen();
+      case 2:
+        return const QiblaCompassPage();
       case 3:
-        return const PrayerTimesScreen();
+        return const FavoritesScreen();
       case 4:
+        return const PrayerTimesScreen();
+      case 5:
         return const SettingsScreen();
       default:
         return const HomeScreen();
@@ -52,12 +57,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _index,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         onDestinationSelected: (value) {
-          if (value != 2) {
+          if (value != _homeIndex) {
             context.read<AppProvider>().clearSearch();
           }
           setState(() => _index = value);
         },
         destinations: const [
+          NavigationDestination(
+            icon: Icon(OctIcons.home),
+            selectedIcon: Icon(OctIcons.home_fill),
+            label: 'الرئيسية',
+          ),
+          NavigationDestination(
+            icon: Icon(OctIcons.book),
+            selectedIcon: Icon(OctIcons.book),
+            label: 'القرآن',
+          ),
           NavigationDestination(
             icon: Icon(OctIcons.location),
             selectedIcon: Icon(OctIcons.location_fill),
@@ -67,11 +82,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(OctIcons.heart),
             selectedIcon: Icon(OctIcons.heart_fill),
             label: 'المفضلة',
-          ),
-          NavigationDestination(
-            icon: Icon(OctIcons.home),
-            selectedIcon: Icon(OctIcons.home_fill),
-            label: 'الرئيسية',
           ),
           NavigationDestination(
             icon: Icon(OctIcons.clock),

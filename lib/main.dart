@@ -1,52 +1,22 @@
 import 'dart:ui';
 
+import 'package:adhkar_viewer/features/quran/presentation/screens/quran_index_screen.dart';
 import 'package:adhkar_viewer/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:provider/provider.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter/services.dart';
 
 import 'providers/app_provider.dart';
 import 'providers/prayer_time_provider.dart';
 import 'services/notification_service.dart';
+import 'services/prayer_scheduler.dart';
+import 'services/timezone_service.dart';
 import 'theme/app_theme.dart';
 
 const String prayerRefreshTaskName = 'refreshPrayerSchedule';
-const String prayerRefreshUniqueName = 'almufradun_prayer_refresh';
-
-Future<void> _configureLocalTimeZone() async {
-  // Initialize timezone database
-  tz.initializeTimeZones();
-
-  try {
-    // Detect device timezone ID
-    final rawTimezone = await FlutterTimezone.getLocalTimezone();
-    String timezoneId = rawTimezone.toString();
-
-    // Extract ID if it's in the "TimezoneInfo(ID, ...)" format
-    if (timezoneId.contains('(') && timezoneId.contains(',')) {
-      timezoneId = timezoneId
-          .substring(timezoneId.indexOf('(') + 1, timezoneId.indexOf(','))
-          .trim();
-    } else if (timezoneId.contains('(') && timezoneId.contains(')')) {
-      timezoneId = timezoneId
-          .substring(timezoneId.indexOf('(') + 1, timezoneId.indexOf(')'))
-          .trim();
-    }
-
-    // Set local location for the timezone package
-    tz.setLocalLocation(tz.getLocation(timezoneId));
-    debugPrint('🌍 Timezone configured: $timezoneId');
-  } catch (e) {
-    debugPrint('❌ Error configuring timezone: $e');
-    // Fallback to UTC if detection fails to prevent crash
-    tz.setLocalLocation(tz.getLocation('UTC'));
-  }
-}
+const String prayerRefreshUniqueName = 'com.hussein.almufradun.prayer.refresh';
 
 @pragma('vm:entry-point')
 void prayerRefreshCallbackDispatcher() {
@@ -54,11 +24,11 @@ void prayerRefreshCallbackDispatcher() {
     WidgetsFlutterBinding.ensureInitialized();
     DartPluginRegistrant.ensureInitialized();
 
-    await _configureLocalTimeZone();
+    await TimezoneService.configureLocalTimeZone();
     await NotificationService.instance.init();
 
-    final prayerProvider = PrayerTimeProvider(autoInitialize: false);
-    await prayerProvider.refreshPrayerScheduleInBackground();
+    PrayerScheduler.instance.attachMethodChannelHandler();
+    await PrayerScheduler.instance.refreshSchedule(requestPermissions: false);
 
     return true;
   });
@@ -69,37 +39,50 @@ Future<void> _configurePrayerBackgroundRefresh() async {
   await Workmanager().registerPeriodicTask(
     prayerRefreshUniqueName,
     prayerRefreshTaskName,
-    frequency: const Duration(hours: 24),
+    frequency: const Duration(hours: 12),
     initialDelay: const Duration(minutes: 15),
     existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
   );
 }
 
-void main() async {
-  // Ensure Flutter bindings are ready before async initialization
-  WidgetsFlutterBinding.ensureInitialized();
-
+/// Initialise timezone, notifications, method-channel bridges and WorkManager.
+///
+/// Called once by [SplashScreen] after it is already visible on-screen,
+/// guaranteeing no race between services and consumers like
+/// [PrayerTimeProvider].
+Future<void> initializeAppServices() async {
   // Lock orientation to portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Configure local timezone correctly before running the app
-  await _configureLocalTimeZone();
+  // Configure local timezone correctly before anything that needs tz.local.
+  await TimezoneService.configureLocalTimeZone();
 
   // Initialize the notification service singleton
   await NotificationService.instance.init();
+  PrayerScheduler.instance.attachMethodChannelHandler();
 
   // Keep prayer notification schedules refreshed while the app is closed.
   await _configurePrayerBackgroundRefresh();
+}
 
+void main() {
+  // Ensure Flutter bindings are ready
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // runApp is called immediately so that SplashScreen renders on the very
+  // first frame — no async work blocks the first paint.
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
-        // PrayerTimeProvider auto-fetches location & calculates times on creation
-        ChangeNotifierProvider(create: (_) => PrayerTimeProvider()),
+        // PrayerTimeProvider does NOT auto-initialise; SplashScreen triggers
+        // it after services (timezone, notifications) are fully ready.
+        ChangeNotifierProvider(
+          create: (_) => PrayerTimeProvider(autoInitialize: false),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -137,6 +120,9 @@ class MyApp extends StatelessWidget {
             );
           },
           home: const SplashScreen(),
+          routes: {
+            QuranIndexScreen.routeName: (_) => QuranIndexScreen(),
+          },
         );
       },
     );

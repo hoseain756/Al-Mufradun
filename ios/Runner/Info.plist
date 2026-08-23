@@ -40,15 +40,20 @@
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>processing</string>
+		</array>
+		<key>BGTaskSchedulerPermittedIdentifiers</key>
+		<array>
+			<string>com.hussein.almufradun.prayer.refresh</string>
+		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
 
 		<!-- Location permission: needed for prayer times and Qibla calculation -->
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>نحتاج إلى موقعك لحساب أوقات الصلاة واتجاه القبلة بدقة</string>
-		<key>NSLocationAlwaysUsageDescription</key>
-		<string>نحتاج إلى موقعك لحساب أوقات الصلاة واتجاه القبلة بدقة</string>
-		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>نحتاج إلى موقعك لحساب أوقات الصلاة واتجاه القبلة بدقة</string>
 	</dict>
 </plist>

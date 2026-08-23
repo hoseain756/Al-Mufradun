@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:adhan/adhan.dart'; // ✅ Added for accurate Qibla calculation
+import 'package:adhan/adhan.dart'; //  Added for accurate Qibla calculation
 import '../theme/app_icons.dart';
 
 /// Qibla Compass Page
@@ -21,7 +21,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage> {
   final _locationStreamController =
       StreamController<LocationStatus>.broadcast();
 
-  // ✅ Stream initialized once here to avoid breaking updates on rebuild
+  // Stream initialized once here to avoid breaking updates on rebuild
   final _qiblahStream = FlutterQiblah.qiblahStream;
 
   @override

@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
+
+import 'timezone_service.dart';
 
 /// Singleton service for managing local prayer-time notifications.
 ///
@@ -26,24 +29,36 @@ class NotificationService {
     'isha': 5,
   };
 
-  // ── Android notification channel ─────────────────────────
-  static const String _channelId = 'prayer_reminders';
-  static const String _channelName = 'تنبيهات الصلاة';
-  static const String _channelDesc = 'تنبيهات لأوقات الصلوات الخمس';
+  // ── Android notification channels ───────────────────────
+  static const int _androidPrayerChannelSchemaVersion = 3;
+  static const String _androidPrayerChannelSchemaPrefKey =
+      'android_prayer_notification_channel_schema_version';
+
+  static const String _channelIdStandard = 'prayer_reminders_standard_adhan_v3';
+  static const String _channelIdFajr = 'prayer_reminders_fajr_adhan_v3';
+
+  static const String _channelNameStandard = 'تنبيهات الصلاة';
+  static const String _channelNameFajr = 'تنبيهات صلاة الفجر';
+
+  static const String _channelDescStandard = 'تنبيهات لأوقات الصلوات الأربع الأخرى';
+  static const String _channelDescFajr = 'تنبيهات لوقت صلاة الفجر';
 
   /// Initialize the notification plugin with Android & iOS settings.
   Future<void> init() async {
     if (_initialized) return;
 
+    await TimezoneService.configureLocalTimeZone();
+
     // Android initialization: use the app icon as the notification icon
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS / macOS initialization: request alert, badge, sound
+    // Permission prompts are requested explicitly from app-driven flows. Keeping
+    // init quiet allows background schedule refreshes to run safely.
     const darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
@@ -54,23 +69,80 @@ class NotificationService {
 
     await _plugin.initialize(settings: initSettings);
 
-    // Create the Android notification channel
-    const androidChannel = AndroidNotificationChannel(
-      _channelId,
-      _channelName,
-      description: _channelDesc,
-      importance: Importance.max, // ✅ Set to MAX as requested
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await _configureAndroidPrayerChannels(androidPlugin);
+    }
+
+    _initialized = true;
+  }
+
+  Future<void> _configureAndroidPrayerChannels(
+    AndroidFlutterLocalNotificationsPlugin androidPlugin,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedSchemaVersion =
+        prefs.getInt(_androidPrayerChannelSchemaPrefKey) ?? 0;
+
+    if (savedSchemaVersion != _androidPrayerChannelSchemaVersion) {
+      await _deletePrayerNotificationChannels(androidPlugin);
+    }
+
+    // Android raw resource sounds must be referenced by resource entry name
+    // only. Do not include ".mp3" here.
+    const androidChannelStandard = AndroidNotificationChannel(
+      _channelIdStandard,
+      _channelNameStandard,
+      description: _channelDescStandard,
+      importance: Importance.max,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('adhan'), // ✅ Custom sound
+      sound: RawResourceAndroidNotificationSound('y1000'),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
       enableVibration: true,
     );
 
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(androidChannel);
+    const androidChannelFajr = AndroidNotificationChannel(
+      _channelIdFajr,
+      _channelNameFajr,
+      description: _channelDescFajr,
+      importance: Importance.max,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('y1001'),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      enableVibration: true,
+    );
 
-    _initialized = true;
+    await androidPlugin.createNotificationChannel(androidChannelStandard);
+    await androidPlugin.createNotificationChannel(androidChannelFajr);
+
+    await prefs.setInt(
+      _androidPrayerChannelSchemaPrefKey,
+      _androidPrayerChannelSchemaVersion,
+    );
+  }
+
+  Future<void> _deletePrayerNotificationChannels(
+    AndroidFlutterLocalNotificationsPlugin androidPlugin,
+  ) async {
+    const prayerChannelIds = <String>[
+      'prayer_reminders',
+      'prayer_reminders_standard',
+      'prayer_reminders_fajr',
+      'prayer_reminders_standard_adhan',
+      'prayer_reminders_fajr_adhan',
+      'prayer_reminders_standard_adhan_v1',
+      'prayer_reminders_fajr_adhan_v1',
+      'prayer_reminders_standard_adhan_v2',
+      'prayer_reminders_fajr_adhan_v2',
+      'prayer_reminders_standard_adhan_v3',
+      'prayer_reminders_fajr_adhan_v3',
+    ];
+
+    for (final channelId in prayerChannelIds) {
+      await androidPlugin.deleteNotificationChannel(channelId: channelId);
+    }
   }
 
   /// Request notification permission (Android 13+ / iOS).
@@ -129,26 +201,35 @@ class NotificationService {
     debugPrint('⌚ Current time: $now');
     debugPrint('⌛ Difference: ${scheduledDate.difference(now)}');
 
-    const androidDetails = AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDesc,
+    final isFajr = (id ~/ 100) == 1;
+    final channelId = isFajr ? _channelIdFajr : _channelIdStandard;
+    final channelName = isFajr ? _channelNameFajr : _channelNameStandard;
+    final channelDesc = isFajr ? _channelDescFajr : _channelDescStandard;
+    final androidSoundName = isFajr ? 'y1001' : 'y1000';
+    final iosSoundName = isFajr ? 'y1001.mp3' : 'y1000.mp3';
+
+    final androidDetails = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDesc,
       importance: Importance.max, // ✅ Set to MAX
       priority: Priority.high,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('adhan'), // ✅ Custom sound
+      sound: RawResourceAndroidNotificationSound(androidSoundName),
       enableVibration: true,
-      styleInformation: BigTextStyleInformation(''),
+      category: AndroidNotificationCategory.alarm,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      styleInformation: const BigTextStyleInformation(''),
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    final iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      sound: 'adhan.mp3', // ✅ Custom sound
+      sound: iosSoundName, // ✅ Custom sound
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -181,6 +262,21 @@ class NotificationService {
   Future<void> cancelNotification(int id) async {
     await _plugin.cancel(id: id);
     debugPrint('🚫 Cancelled notification #$id');
+  }
+
+  /// Cancel all rolling prayer notifications owned by the prayer scheduler.
+  Future<void> cancelScheduledPrayerNotifications({
+    required int scheduledWindowDays,
+  }) async {
+    final ids = <int>{
+      ...prayerNotificationIds.values,
+      for (final prayerId in prayerNotificationIds.values)
+        for (var offset = 0; offset < scheduledWindowDays; offset++)
+          (prayerId * 100) + offset,
+    };
+
+    await Future.wait(ids.map((id) => _plugin.cancel(id: id)));
+    debugPrint('🚫 Cancelled ${ids.length} prayer notifications');
   }
 
   /// Cancel all scheduled notifications.

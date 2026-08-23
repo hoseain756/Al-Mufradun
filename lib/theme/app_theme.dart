@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// M3-compliant theme configuration.
 /// Uses ColorScheme.fromSeed for dynamic tonal palettes,
 /// M3 type scale, shape tokens, and component themes.
 class AppTheme {
   // ── Primary UI font (titles, buttons, labels, descriptions)
-  static String get _uiFont => GoogleFonts.ibmPlexSansArabic().fontFamily!;
+  static const String _uiFont = 'TheYearofHandicrafts';
 
   // ── Local font families (registered in pubspec.yaml)
+  static const String handicraftsFont = 'TheYearofHandicrafts';
   static const String alnasakhFont = 'alnasakh';
   static const String uthmanicHafsFont = 'UthmanicHafs';
+  static const String elgharibSurahNameFont = 'ElgharibSurahName';
+
+  /// Resolves the correct QCF2 page font family name based on page number.
+  /// Format: QCF2{pageNumber padded to 3 digits} (e.g., QCF2001)
+  static String getQuranPageFont(int pageNumber) {
+    final pageStr = pageNumber.toString().padLeft(3, '0');
+    return 'QCF2$pageStr';
+  }
 
   // ── M3 Seed Color ─────────────────────────────────────────
   static const Color _seedColor = Color(0xFF10B981); // Emerald green
@@ -217,24 +225,24 @@ class AppTheme {
 
       // ── M3 Type Scale ───────────────────────────────────
       textTheme: const TextTheme(
-        // M3 Display: 57/64 400, 45/52 400, 36/44 400
-        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400, height: 1.12),
-        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w400, height: 1.16),
-        displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w400, height: 1.22),
-        // M3 Headline: 32/40 400, 28/36 400, 24/32 400
-        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w400, height: 1.25),
-        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w400, height: 1.29),
-        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w400, height: 1.33),
-        // M3 Title: 22/28 400, 16/24 500, 14/20 500
-        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w400, height: 1.27),
-        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.50),
+        // M3 Display: massive decorative titles (Bold/Black)
+        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w900, height: 1.12),
+        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w900, height: 1.16),
+        displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, height: 1.22),
+        // M3 Headline: section titles (Bold)
+        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, height: 1.25),
+        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.29),
+        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.33),
+        // M3 Title: card and block titles (Bold/SemiBold/Medium)
+        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, height: 1.27),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.50),
         titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.43),
-        // M3 Body: bodyLarge uses alnasakh for zekr text
-        bodyLarge: TextStyle(fontFamily: alnasakhFont, fontSize: 16, fontWeight: FontWeight.w400, height: 1.50),
+        // M3 Body: UI description & copy (uses primary UI font, alnasakhFont is removed)
+        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.50),
         bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.43),
         bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.33),
-        // M3 Label: 14/20 500, 12/16 500, 11/16 500
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.43),
+        // M3 Label: buttons, badges, metadata (SemiBold/Medium)
+        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.43),
         labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.33),
         labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.45),
       ),
@@ -407,19 +415,24 @@ class AppTheme {
 
       // ── M3 Type Scale (same sizes, colors from scheme) ──
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400, height: 1.12),
-        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w400, height: 1.16),
-        displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w400, height: 1.22),
-        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w400, height: 1.25),
-        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w400, height: 1.29),
-        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w400, height: 1.33),
-        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w400, height: 1.27),
-        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.50),
+        // M3 Display: massive decorative titles (Bold/Black)
+        displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w900, height: 1.12),
+        displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w900, height: 1.16),
+        displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, height: 1.22),
+        // M3 Headline: section titles (Bold)
+        headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, height: 1.25),
+        headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.29),
+        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.33),
+        // M3 Title: card and block titles (Bold/SemiBold/Medium)
+        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, height: 1.27),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.50),
         titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.43),
-        bodyLarge: TextStyle(fontFamily: alnasakhFont, fontSize: 16, fontWeight: FontWeight.w400, height: 1.50),
+        // M3 Body: UI description & copy (uses primary UI font, alnasakhFont is removed)
+        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.50),
         bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.43),
         bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.33),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.43),
+        // M3 Label: buttons, badges, metadata (SemiBold/Medium)
+        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.43),
         labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.33),
         labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.45),
       ),

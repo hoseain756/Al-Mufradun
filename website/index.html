@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al-Mufradun | المفردون — Landing Page & Privacy Policy</title>
+    <meta name="description" content="Al-Mufradun (المفردون) is your elegant, privacy-first companion for Azkar, Prayer Times, Qibla Compass, and the Holy Quran.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cairo:wght@300;400;600;700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <header class="navbar-wrapper">
+        <nav class="navbar container">
+            <div class="nav-brand">
+                <!-- Geometric eight-pointed star logo -->
+                <svg class="brand-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- outer octagon -->
+                    <path d="M40 6 L56 16 L70 30 L74 48 L66 64 L50 74 L32 74 L16 64 L8 48 L12 30 L26 16 Z"
+                          stroke="oklch(60% 0.13 78)" stroke-width="2" fill="none" opacity="0.5"/>
+                    <!-- eight-pointed star -->
+                    <path d="M40 14 L44 30 L58 26 L48 38 L62 44 L48 50 L56 62 L42 54 L40 70 L38 54 L24 62 L32 50 L18 44 L32 38 L22 26 L36 30 Z"
+                          fill="oklch(60% 0.13 78)" opacity="0.18"/>
+                    <!-- inner geometric ring -->
+                    <circle cx="40" cy="40" r="18" stroke="oklch(22% 0.06 150)" stroke-width="1.5" fill="none"/>
+                    <!-- center diamond -->
+                    <path d="M40 30 L48 40 L40 50 L32 40 Z"
+                          fill="oklch(22% 0.06 150)" opacity="0.85"/>
+                    <!-- four small gold dots at compass points -->
+                    <circle cx="40" cy="22" r="2.5" fill="oklch(60% 0.13 78)"/>
+                    <circle cx="58" cy="40" r="2.5" fill="oklch(60% 0.13 78)"/>
+                    <circle cx="40" cy="58" r="2.5" fill="oklch(60% 0.13 78)"/>
+                    <circle cx="22" cy="40" r="2.5" fill="oklch(60% 0.13 78)"/>
+                </svg>
+                <div class="brand-text">
+                    <span class="brand-en">Al-Mufradun</span>
+                    <span class="brand-ar">المفردون</span>
+                </div>
+            </div>
+
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#privacy" class="nav-link">Privacy Policy</a>
+                <a href="#download" class="btn btn-secondary btn-sm">Download</a>
+                <button id="lang-toggle-btn" class="lang-switch-btn" aria-label="Switch Language">العربية</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero -->
+        <section class="hero-section container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <span class="badge">Islamic Companion App</span>
+                    <h1 class="hero-title">
+                        Al-Mufradun
+                        <span class="arabic-display">المفردون</span>
+                    </h1>
+                    <p class="hero-tagline">
+                        Your daily companion for Azkar, Prayer Times, and the Holy Quran.
+                        Designed with absolute privacy, simplicity, and serenity.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="#download" class="btn btn-primary">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                            </svg>
+                            Download on Google Play
+                        </a>
+                        <a href="#privacy" class="btn btn-outline">Read Privacy Policy</a>
+                    </div>
+                </div>
+
+                <!-- Phone Mockup -->
+                <div class="hero-mockup">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="app-header">
+                                <div class="app-status-bar">
+                                    <span>09:41</span>
+                                    <div class="status-icons">
+                                        <!-- signal bars -->
+                                        <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor" style="opacity:.8">
+                                            <rect x="0" y="8" width="3" height="4" rx="0.5"/>
+                                            <rect x="4" y="5" width="3" height="7" rx="0.5"/>
+                                            <rect x="8" y="2" width="3" height="10" rx="0.5"/>
+                                            <rect x="12" y="0" width="2" height="12" rx="0.5"/>
+                                        </svg>
+                                        <!-- battery -->
+                                        <svg width="16" height="10" viewBox="0 0 16 10" fill="none" style="opacity:.8">
+                                            <rect x="0.5" y="0.5" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/>
+                                            <rect x="2" y="2" width="8" height="6" rx="0.5" fill="currentColor"/>
+                                            <path d="M14 3.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="app-nav">
+                                    <span class="app-nav-title">المفردون</span>
+                                    <!-- small geometric mark -->
+                                    <svg class="app-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z"
+                                              fill="currentColor" opacity="0.9"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="app-body">
+                                <!-- Prayer Time Widget -->
+                                <div class="app-widget prayer-widget">
+                                    <div class="widget-header">
+                                        <span class="widget-title">الصلاة القادمة</span>
+                                        <span class="widget-time">العصر — 03:42 م</span>
+                                    </div>
+                                    <div class="widget-progress-bar">
+                                        <div class="widget-progress-fill" style="width: 70%;"></div>
+                                    </div>
+                                    <div class="widget-footer">
+                                        <span>متبقي 01:12:45</span>
+                                        <span>الرياض، السعودية</span>
+                                    </div>
+                                </div>
+
+                                <!-- Dhikr Widget -->
+                                <div class="app-widget dhikr-widget">
+                                    <div class="dhikr-title">سبحان الله وبحمده</div>
+                                    <div class="dhikr-counter-display" id="mock-counter">0</div>
+                                    <button class="dhikr-btn" id="mock-tap-btn">اضغط للتسبيح</button>
+                                    <div class="dhikr-reset" id="mock-reset-btn">إعادة تعيين</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section id="features" class="features-section">
+            <div class="container">
+                <div class="section-header text-center">
+                    <h2 class="section-title">Core Features</h2>
+                    <p class="section-subtitle">Everything you need to maintain your daily worship, consolidated in a single, lightweight application.</p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                            </svg>
+                        </div>
+                        <h3>Daily Azkar &amp; Supplications</h3>
+                        <p>Access authenticated morning, evening, and sleep supplications, with automatic progress tracking per category.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3>Accurate Prayer Times</h3>
+                        <p>Offline calculation using coordinates with standard Muslim world calculation methods, featuring countdowns and Iqamah markers.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="2" x2="12" y2="6"/>
+                                <line x1="12" y1="18" x2="12" y2="22"/>
+                                <line x1="2" y1="12" x2="6" y2="12"/>
+                                <line x1="18" y1="12" x2="22" y2="12"/>
+                                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Qibla Compass</h3>
+                        <p>An easy-to-use, localized compass with Arabic cardinal indicators (ش/ج/شر/غ) that guides you straight to the Kaaba.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                        </div>
+                        <h3>The Holy Quran</h3>
+                        <p>A full 604-page Mushaf PageView utilizing the beautiful Uthmanic font, featuring range selection and customizable verse actions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Privacy Policy -->
+        <section id="privacy" class="privacy-section">
+            <div class="container">
+                <div class="privacy-card-container">
+                    <div class="privacy-header">
+                        <div class="privacy-title-group">
+                            <h2 class="privacy-title">Privacy Policy</h2>
+                            <p class="privacy-meta">Package Name: <code class="package-code">com.hussein.almufradun</code></p>
+                        </div>
+                        <div class="privacy-tabs">
+                            <button class="tab-btn active" data-target="policy-en">English</button>
+                            <button class="tab-btn" data-target="policy-ar">العربية</button>
+                        </div>
+                    </div>
+
+                    <!-- English -->
+                    <div id="policy-en" class="policy-content active">
+                        <div class="policy-body">
+                            <p class="lead-text">Effective Date: May 29, 2026</p>
+                            <p>At <strong>Al-Mufradun (المفردون)</strong>, we are committed to providing a spiritual, peaceful, and entirely private experience. This Privacy Policy details how we handle user information in our mobile application.</p>
+
+                            <div class="policy-alert">
+                                <strong>Core Principle:</strong> We believe in absolute privacy. Al-Mufradun does not collect, track, upload, or sell your personal details, location, or usage data. Everything remains securely on your device.
+                            </div>
+
+                            <h3>1. Comprehensive Free Use &amp; Data Policy</h3>
+                            <ul>
+                                <li>The application is completely free of charge, contains no third-party advertisements, and features no tracking SDKs.</li>
+                                <li>We do <strong>not</strong> collect, sell, lease, or share any personal, device, or usage data with any third parties under any circumstances.</li>
+                            </ul>
+
+                            <h3>2. Device Permissions and Usage</h3>
+                            <p>To deliver essential offline utility, the application requests the following standard permissions:</p>
+
+                            <div class="permission-item">
+                                <div class="permission-badge">Location Access</div>
+                                <div class="permission-detail">
+                                    <strong>Purpose:</strong> Used solely to calculate exact prayer times and determine the Qibla compass direction relative to your physical location.<br>
+                                    <strong>Handling:</strong> Coordinates are calculated and processed entirely locally on your device. This information is never uploaded to any external server, database, or third-party service.
+                                </div>
+                            </div>
+
+                            <div class="permission-item">
+                                <div class="permission-badge">Notifications</div>
+                                <div class="permission-detail">
+                                    <strong>Purpose:</strong> Required to schedule and display daily Azkar reminders and Athan notification alerts on your device.<br>
+                                    <strong>Handling:</strong> All notification schedules and alarms are managed locally by the operating system using native background schedulers. No remote push servers are used.
+                                </div>
+                            </div>
+
+                            <h3>3. Data Storage &amp; Local Persistence</h3>
+                            <ul>
+                                <li>Your settings, dhikr counts, and favorite items are stored strictly in your device's local memory (via SharedPreferences and local SQLite databases).</li>
+                                <li>All prayer time updates and Quran databases are bundled internally or calculated locally, operating completely offline.</li>
+                            </ul>
+
+                            <h3>4. Children's Privacy</h3>
+                            <p>Our services do not address anyone under the age of 13. Since we do not collect any personal data, we do not knowingly or unknowingly process children's data.</p>
+
+                            <h3>5. Changes to This Privacy Policy</h3>
+                            <p>We may update our Privacy Policy from time to time. You are advised to review this page periodically for any changes. Changes are effective immediately once updated on this page.</p>
+
+                            <div class="policy-footer">
+                                <h3>Support Contact</h3>
+                                <p>If you have any questions or suggestions regarding our Privacy Policy or the app in general, please contact us at:</p>
+                                <a href="mailto:support@almufradun.app" class="contact-email">support@almufradun.app</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Arabic -->
+                    <div id="policy-ar" class="policy-content" dir="rtl">
+                        <div class="policy-body">
+                            <p class="lead-text">تاريخ النفاذ: ٢٩ مايو ٢٠٢٦</p>
+                            <p>في تطبيق <strong>المفردون (Al-Mufradun)</strong>، نحن ملتزمون بتوفير تجربة إيمانية هادئة وخاصة بالكامل. توضح سياسة الخصوصية هذه كيفية التعامل مع معلومات المستخدمين داخل تطبيق الهاتف المحمول الخاص بنا.</p>
+
+                            <div class="policy-alert">
+                                <strong>المبدأ الأساسي:</strong> نحن نؤمن بالخصوصية المطلقة. لا يقوم تطبيق "المفردون" بجمع بياناتك الشخصية، أو موقعك، أو بيانات استخدامك، ولا يقوم برفعها أو تتبعها أو بيعها. تظل جميع البيانات مخزنة بأمان على جهازك الشخصي.
+                            </div>
+
+                            <h3>١. سياسة الاستخدام المجاني الكامل والبيانات</h3>
+                            <ul>
+                                <li>التطبيق مجاني بالكامل وخالٍ تماماً من الإعلانات ومن أي مكتبات تتبع خارجية.</li>
+                                <li>نحن <strong>لا نقوم</strong> بجمع، أو بيع، أو تأجير، أو مشاركة أي بيانات شخصية أو معلومات خاصة بالجهاز أو الاستخدام مع أي جهات خارجية تحت أي ظرف من الظروف.</li>
+                            </ul>
+
+                            <h3>٢. صلاحيات الجهاز وكيفية استخدامها</h3>
+                            <p>لكي يقدم التطبيق وظائفه الأساسية دون اتصال بالإنترنت، يطلب الصلاحيات القياسية التالية:</p>
+
+                            <div class="permission-item">
+                                <div class="permission-badge">صلاحية الوصول للموقع (GPS)</div>
+                                <div class="permission-detail">
+                                    <strong>الغرض:</strong> تُستخدم هذه الصلاحية فقط لحساب مواقيت الصلاة الدقيقة وتحديد اتجاه القبلة بدقة بناءً على موقعك الحالي.<br>
+                                    <strong>طريقة المعالجة:</strong> يتم حساب إحداثيات الموقع ومعالجتها محلياً بالكامل على جهازك. لا يتم مطلقاً رفع معلومات الموقع هذه إلى أي خوادم خارجية أو مشاركتها مع أي طرف ثالث.
+                                </div>
+                            </div>
+
+                            <div class="permission-item">
+                                <div class="permission-badge">صلاحية الإشعارات</div>
+                                <div class="permission-detail">
+                                    <strong>الغرض:</strong> مطلوبة لجدولة وعرض تنبيهات الأذكار اليومية وإشعارات الأذان على جهازك.<br>
+                                    <strong>طريقة المعالجة:</strong> تُدار جميع جداول وتنبيهات الإشعارات محلياً بالكامل بواسطة نظام تشغيل الهاتف عبر المجدول المحلي. لا يتم استخدام أي خوادم إرسال إشعارات عن بُعد.
+                                </div>
+                            </div>
+
+                            <h3>٣. تخزين البيانات محلياً</h3>
+                            <ul>
+                                <li>تُحفظ تفضيلاتك، وعداد التسبيح، وقائمة الأذكار المفضلة لديك بالكامل داخل الذاكرة المحلية للجهاز (عبر SharedPreferences وقاعدة بيانات SQLite محلية).</li>
+                                <li>تتم جميع حسابات أوقات الصلاة وعرض القرآن الكريم محلياً ودون الحاجة للاتصال بالإنترنت.</li>
+                            </ul>
+
+                            <h3>٤. خصوصية الأطفال</h3>
+                            <p>خدماتنا لا تخاطب الأطفال دون سن ١٣ عاماً بشكل مباشر. ونظراً لأننا لا نجمع أي بيانات على الإطلاق، فنحن لا نجمع أو نعالج أي بيانات تخص الأطفال بشكل متعمد أو غير متعمد.</p>
+
+                            <h3>٥. التعديلات على سياسة الخصوصية</h3>
+                            <p>قد نقوم بتحديث سياسة الخصوصية الخاصة بنا من وقت لآخر. ننصحك بمراجعة هذه الصفحة بشكل دوري للوقوف على أي تغييرات. تصبح أي تعديلات سارية المفعول فور نشرها على هذه الصفحة.</p>
+
+                            <div class="policy-footer">
+                                <h3>الدعم الفني والتواصل</h3>
+                                <p>إذا كانت لديك أي أسئلة أو استفسارات بخصوص سياسة الخصوصية أو التطبيق بشكل عام، يمكنك التواصل معنا عبر البريد الإلكتروني التالي:</p>
+                                <a href="mailto:support@almufradun.app" class="contact-email">support@almufradun.app</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Download -->
+        <section id="download" class="download-section text-center">
+            <div class="container download-container">
+                <div class="download-ornament"></div>
+                <h2>Start Your Daily Spiritual Journey</h2>
+                <p>Download Al-Mufradun now and access your daily Azkar, offline prayer calculations, and Quran in a refined, distraction-free design.</p>
+                <div class="download-buttons">
+                    <a href="#" class="btn btn-secondary btn-lg">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                        </svg>
+                        Download on Google Play
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content text-center">
+            <svg class="footer-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 14 L44 30 L58 26 L48 38 L62 44 L48 50 L56 62 L42 54 L40 70 L38 54 L24 62 L32 50 L18 44 L32 38 L22 26 L36 30 Z"
+                      fill="oklch(72% 0.12 82)" opacity="0.35"/>
+                <circle cx="40" cy="40" r="14" stroke="oklch(72% 0.12 82)" stroke-width="1.5" fill="none"/>
+                <path d="M40 32 L45 40 L40 48 L35 40 Z" fill="oklch(72% 0.12 82)"/>
+            </svg>
+            <p class="copyright">&copy; <span id="footer-year">2026</span> Al-Mufradun (المفردون). All rights reserved.</p>
+            <p class="footer-note">Designed and built with absolute privacy in mind.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

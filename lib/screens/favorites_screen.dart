@@ -49,14 +49,6 @@ class FavoritesScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'اضغط على ♡ لحفظ الأذكار هنا',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   )

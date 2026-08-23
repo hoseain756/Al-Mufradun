@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(OctIcons.book, color: colorScheme.primary),
               const SizedBox(width: 12),
               Text(
-                'المفردون',
+                'الـمـفردون',
                 style: textTheme.titleLarge?.copyWith(
                   color: colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -83,6 +83,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
                   hintText: 'بحث في الأذكار...',
+                  hintStyle: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w300,
+                  ),
                   prefixIcon: const Icon(OctIcons.search),
                   suffixIcon: provider.searchQuery.isNotEmpty
                       ? IconButton(
@@ -167,7 +171,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       OctIcons.search,
                       size: 64,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -196,14 +201,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Normal: quick-access + category grid
         else ...[
-          // Quick-access buttons for morning/evening adhkar
-          SliverToBoxAdapter(
-            child: _QuickAccessButtons(
-              categories: provider.categories,
-              onOpenCategory: (cat) => _openCategory(context, cat),
-            ),
-          ),
-
           // Category grid
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -234,106 +231,4 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _QuickAccessButtons extends StatelessWidget {
-  final List<String> categories;
-  final void Function(String category) onOpenCategory;
 
-  const _QuickAccessButtons({
-    required this.categories,
-    required this.onOpenCategory,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final morningCat = categories.cast<String?>().firstWhere(
-          (c) => c!.contains('الصباح'),
-          orElse: () => null,
-        );
-    final eveningCat = categories.cast<String?>().firstWhere(
-          (c) => c!.contains('المساء'),
-          orElse: () => null,
-        );
-
-    if (morningCat == null && eveningCat == null) {
-      return const SizedBox.shrink();
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Row(
-        children: [
-          if (morningCat != null)
-            Expanded(
-              child: FilledButton.tonal(
-                onPressed: () => onOpenCategory(morningCat),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.orange.withValues(alpha: 0.15),
-                  foregroundColor:
-                      isDark ? Colors.orange.shade300 : Colors.orange.shade700,
-                  minimumSize: const Size(0, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(OctIcons.sun,
-                        size: 18,
-                        color: isDark
-                            ? Colors.orange.shade300
-                            : Colors.orange.shade700),
-                    const SizedBox(width: 8),
-                    const Flexible(
-                      child: Text(
-                        'أذكار الصباح',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (morningCat != null && eveningCat != null)
-            const SizedBox(width: 12),
-          if (eveningCat != null)
-            Expanded(
-              child: FilledButton.tonal(
-                onPressed: () => onOpenCategory(eveningCat),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.indigo.withValues(alpha: 0.15),
-                  foregroundColor:
-                      isDark ? Colors.indigo.shade300 : Colors.indigo.shade700,
-                  minimumSize: const Size(0, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(OctIcons.moon,
-                        size: 18,
-                        color: isDark
-                            ? Colors.indigo.shade300
-                            : Colors.indigo.shade700),
-                    const SizedBox(width: 8),
-                    const Flexible(
-                      child: Text(
-                        'أذكار المساء',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
