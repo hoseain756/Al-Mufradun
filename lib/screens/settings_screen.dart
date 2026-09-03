@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../widgets/rate_app_card.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -204,6 +205,8 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                 ),
+
+                const RateAppCard(),
 
                 // ── About ────────────────────────────────────
                 Card(

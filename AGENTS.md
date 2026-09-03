@@ -1,5 +1,4 @@
 # CLAUDE.md
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
@@ -55,7 +54,9 @@ Use `AppTheme.zekrStyle()` to get the correct TextStyle for adhkar text based on
 **Quran reader behavior:** `SurahReaderScreen` depends on `QuranRepository`, not SQLite classes. The reader is a fixed 604-page Mushaf `PageView` backed by the hardcoded standard page-start map in `data/static/mushaf_page_mapping.dart`. Each page queries the SQLite verses from that page start until the next page start and renders through `QuranTextPage`, which loads the page-specific QCF font and displays each verse's `qcf_text` glyph data as text. `QuranTextPage` sizes the page dynamically to fill the available screen while preserving exactly 15 line slots. Do not reintroduce `assets/quran_svg`, `flutter_svg`, or page image/SVG rendering. Surah starts render a pure Flutter double-border header and optional centered Bismillah; Surah 1 renders Bismillah as normal aya 1 QCF text, and Surah 9 has no Bismillah. Copy/share payloads must continue to use the normal `text` column, not `qcf_text`.
 
 **Quran verse actions:** Verse long-press behavior is a presentation concern. `QuranTextPage` owns inline long-press hit testing and selected-verse highlighting, then delegates the chosen verse to `SurahReaderScreen`, which opens `VerseActionSheet`. Actions are centralized under `presentation/actions`: `VerseActionType`, `VerseActionContext`, and `VerseActionCommand` describe typed commands; `VerseActionController` owns ordering, visibility, enabled state, disabled reasons, execution, and optional analytics tracking. `VerseActionSheet` is a generic RTL renderer of typed commands and must not hardcode individual Quran actions. Copy and text-share payload formatting belongs in `presentation/utils` (`VerseActionFormatter`) so citation formatting stays reusable and independent from widgets. `VerseActionType.shareText` is executed through `share_plus` inside `VerseActionController`; image sharing renders QCF text with the same page font as the reader. `VerseActionType.bookmark` saves the selected ayah and last reading position in SharedPreferences, while `VerseActionType.removeBookmark` removes a saved ayah and clears its page highlight.
+
 `SurahReaderScreen` exposes Quran search from the top bar for surah names, page numbers, verse references, and verse text, and exposes a saved-verses sheet where users can open or remove saved ayahs.
+
 `SurahReaderScreen` now supports inclusive verse-range selection from a dialog with "from" and "to" dropdowns for the current page verses, sharing/copying the full span in database order even when the selection crosses a surah boundary on the same page. Share-image cards render the selected verses with ornate verse markers and Arabic app branding at the bottom.
 
 **Manual QA record (ShareText):** Native share sheet flow for `VerseActionType.shareText` is production-ready and scored 100/100 in manual QA. Tested on Android primary device and iOS if applicable, with WhatsApp, Telegram, and native Messages share sheet. Observed edge cases: none. RTL rendering was correct and text formatting stayed stable with no truncation or layout issues. Keep future device/OS expansion recorded in `TASKS.md` under “Manual QA Notes” so regressions can be traced.
@@ -143,4 +144,4 @@ lib/
 
 ## Important Note
 
-After major changes, please update this file (@agent.md) to reflect the project's current state. This helps maintain consistency and ensures that everyone is aware of the latest developments.
+After major changes, please update this file to reflect the project's current state. This helps maintain consistency and ensures that everyone is aware of the latest developments.

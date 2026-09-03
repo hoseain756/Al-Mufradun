@@ -23,6 +23,7 @@ dependencies:
 
   # Utilities
   share_plus: ^7.2.2
+  url_launcher: ^6.3.0 # Open Play Store deep links
   sqflite: ^2.3.0
   path: ^1.8.0
   path_provider: ^2.1.0
