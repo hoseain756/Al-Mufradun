@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../models/verse_model.dart';
-import 'quran_database_helper.dart';
+import './quran_database_helper.dart';
 
 abstract class QuranLocalDataSource {
   Future<List<VerseModel>> getVersesBySurah(int surahId);

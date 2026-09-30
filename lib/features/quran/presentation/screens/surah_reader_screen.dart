@@ -3,14 +3,14 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_icons.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../data/quran_repository_factory.dart';
 import '../../data/static/mushaf_page_mapping.dart';
 import '../../domain/entities/surah.dart';
 import '../../domain/entities/verse.dart';
 import '../../domain/repositories/quran_repository.dart';
-import '../utils/arabic_number_formatter.dart';
+import '../../../../core/utils/arabic_number_formatter.dart';
 import '../utils/quran_bookmark_store.dart';
 import '../utils/quran_page_font_loader.dart';
 import '../widgets/quran_text_page.dart';

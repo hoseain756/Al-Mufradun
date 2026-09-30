@@ -1,72 +1,13 @@
-import 'dart:ui';
-
-import 'package:adhkar_viewer/features/quran/presentation/screens/quran_index_screen.dart';
-import 'package:adhkar_viewer/screens/splash_screen.dart';
+import 'package:adhkar_viewer/app/screens/splash_screen.dart';
+import 'package:adhkar_viewer/core/app_settings_provider.dart';
+import 'package:adhkar_viewer/features/adhkar/adhkar_provider.dart';
+import 'package:adhkar_viewer/features/prayer_times/prayer_time_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:flutter/services.dart';
 
-import 'providers/app_provider.dart';
-import 'providers/prayer_time_provider.dart';
-import 'services/notification_service.dart';
-import 'services/prayer_scheduler.dart';
-import 'services/timezone_service.dart';
-import 'theme/app_theme.dart';
-
-const String prayerRefreshTaskName = 'refreshPrayerSchedule';
-const String prayerRefreshUniqueName = 'com.hussein.almufradun.prayer.refresh';
-
-@pragma('vm:entry-point')
-void prayerRefreshCallbackDispatcher() {
-  Workmanager().executeTask((taskName, inputData) async {
-    WidgetsFlutterBinding.ensureInitialized();
-    DartPluginRegistrant.ensureInitialized();
-
-    await TimezoneService.configureLocalTimeZone();
-    await NotificationService.instance.init();
-
-    PrayerScheduler.instance.attachMethodChannelHandler();
-    await PrayerScheduler.instance.refreshSchedule(requestPermissions: false);
-
-    return true;
-  });
-}
-
-Future<void> _configurePrayerBackgroundRefresh() async {
-  await Workmanager().initialize(prayerRefreshCallbackDispatcher);
-  await Workmanager().registerPeriodicTask(
-    prayerRefreshUniqueName,
-    prayerRefreshTaskName,
-    frequency: const Duration(hours: 12),
-    initialDelay: const Duration(minutes: 15),
-    existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
-  );
-}
-
-/// Initialise timezone, notifications, method-channel bridges and WorkManager.
-///
-/// Called once by [SplashScreen] after it is already visible on-screen,
-/// guaranteeing no race between services and consumers like
-/// [PrayerTimeProvider].
-Future<void> initializeAppServices() async {
-  // Lock orientation to portrait
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-  // Configure local timezone correctly before anything that needs tz.local.
-  await TimezoneService.configureLocalTimeZone();
-
-  // Initialize the notification service singleton
-  await NotificationService.instance.init();
-  PrayerScheduler.instance.attachMethodChannelHandler();
-
-  // Keep prayer notification schedules refreshed while the app is closed.
-  await _configurePrayerBackgroundRefresh();
-}
+import 'core/theme/app_theme.dart';
+import 'features/quran/presentation/screens/quran_index_screen.dart';
 
 void main() {
   // Ensure Flutter bindings are ready
@@ -77,7 +18,8 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AppProvider()),
+        ChangeNotifierProvider(create: (_) => AppSettingsProvider()),
+        ChangeNotifierProvider(create: (_) => AdhkarProvider()),
         // PrayerTimeProvider does NOT auto-initialise; SplashScreen triggers
         // it after services (timezone, notifications) are fully ready.
         ChangeNotifierProvider(
@@ -94,14 +36,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppProvider>(
-      builder: (context, provider, child) {
+    return Consumer<AppSettingsProvider>(
+      builder: (context, settings, child) {
         return MaterialApp(
           title: 'Adhkar',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          themeMode: provider.themeMode,
+          themeMode: settings.themeMode,
           locale: const Locale('ar'),
           supportedLocales: const [Locale('ar')],
           localizationsDelegates: const [

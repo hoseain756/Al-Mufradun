@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
-import '../../../../theme/app_theme.dart';
 import '../../data/static/mushaf_page_mapping.dart';
 
 class QuranPageFontLoader {
@@ -20,7 +19,7 @@ class QuranPageFontLoader {
 
     return _loadedFonts.putIfAbsent(pageNumber, () async {
       final pageStr = pageNumber.toString().padLeft(3, '0');
-      final loader = FontLoader(AppTheme.getQuranPageFont(pageNumber))
+      final loader = FontLoader(quranPageFontFamily(pageNumber))
         ..addFont(
           rootBundle.load('assets/fonts/QCF2BSMLfonts/QCF2$pageStr.ttf'),
         );

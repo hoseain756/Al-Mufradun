@@ -2,7 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../data/static/mushaf_page_mapping.dart';
 import '../../domain/entities/surah.dart';
 import '../../domain/entities/verse.dart';
 import '../../domain/repositories/quran_repository.dart';
@@ -90,7 +91,7 @@ Future<void> precomputeQuranPageLayout({
   final pageHeight = math.max(520.0, screenHeight - gapH);
   final lineHeight = pageHeight / lineCount;
   final textWidth = pageWidth - (padH * 2);
-  final pageFont = AppTheme.getQuranPageFont(pageNumber);
+  final pageFont = quranPageFontFamily(pageNumber);
 
   // Build & cache page items
   final items = _buildPageItemsForVerses(verses, repository);
@@ -278,7 +279,7 @@ class _MushafTextPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final pageFont = AppTheme.getQuranPageFont(pageNumber);
+    final pageFont = quranPageFontFamily(pageNumber);
     final items = _buildPageItemsCached();
 
     return Directionality(

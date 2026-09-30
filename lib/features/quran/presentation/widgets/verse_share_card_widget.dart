@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_theme.dart';
 import '../../data/static/mushaf_page_mapping.dart';
 import '../../domain/entities/verse.dart';
 import '../actions/verse_action_models.dart';
-import '../utils/arabic_number_formatter.dart';
+import '../../../../core/utils/arabic_number_formatter.dart';
 import '../utils/verse_action_formatter.dart';
 
 class VerseShareCardWidget extends StatelessWidget {
@@ -124,7 +123,7 @@ class _QcfShareExcerpt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final pageFont = AppTheme.getQuranPageFont(group.pageNumber);
+    final pageFont = quranPageFontFamily(group.pageNumber);
 
     return Text.rich(
       TextSpan(

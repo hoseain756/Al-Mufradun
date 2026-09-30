@@ -9,13 +9,13 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../../theme/app_icons.dart';
+import '../../../../core/theme/app_icons.dart';
 import '../../data/static/mushaf_page_mapping.dart';
 import '../utils/quran_bookmark_store.dart';
 import '../utils/quran_page_font_loader.dart';
 import '../utils/verse_action_formatter.dart';
 import '../widgets/verse_share_card_widget.dart';
-import 'verse_action_models.dart';
+import './verse_action_models.dart';
 
 typedef VerseActionPredicate = bool Function(VerseActionContext context);
 typedef VerseCopyHandler = Future<void> Function(
@@ -54,7 +54,7 @@ class VerseActionController {
   final VerseImageShareHandler? _imageShareHandler;
 
   static final List<VerseActionDefinition> defaultDefinitions = [
-    VerseActionDefinition(
+    const VerseActionDefinition(
       type: VerseActionType.bookmark,
       label: 'حفظ الآية والموضع',
       icon: OctIcons.star,
@@ -62,7 +62,7 @@ class VerseActionController {
       analyticsName: 'quran_verse_bookmark',
       visibleWhen: _isStartVerseNotBookmarked,
     ),
-    VerseActionDefinition(
+    const VerseActionDefinition(
       type: VerseActionType.removeBookmark,
       label: 'إزالة الآية من المحفوظات',
       icon: Icons.star_border_rounded,
@@ -260,6 +260,7 @@ class VerseActionController {
 
     await _loadShareImageFonts(actionContext);
 
+    if (!parentContext.mounted) return;
     final overlay = Overlay.maybeOf(parentContext, rootOverlay: true);
     if (overlay == null) return;
 

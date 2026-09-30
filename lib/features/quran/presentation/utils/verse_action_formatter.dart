@@ -1,5 +1,5 @@
 import '../actions/verse_action_models.dart';
-import 'arabic_number_formatter.dart';
+import '../../../../core/utils/arabic_number_formatter.dart';
 
 class VerseActionFormatter {
   const VerseActionFormatter._();

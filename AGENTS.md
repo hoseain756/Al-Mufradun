@@ -23,29 +23,32 @@ dart run flutter_native_splash:create  # Regenerate native splash screen
 
 ## Architecture
 
-**State management:** Provider (`ChangeNotifierProvider`). Two providers are mounted at app root in `main.dart`:
+**Architectural style:** Feature-Based Architecture. Code is organized around business features under `lib/features/`, with genuinely shared code in `lib/core/` and app-level shell/startup flow in `lib/app/`. Features may depend on `core` (and only the `app` shell and Settings screen may reach into features); features never import each other's internals, and `core` never contains feature business logic.
 
-- `AppProvider` — adhkar data (loaded from `assets/adhkar.json`), theme mode (system/light/dark), font size, favorites, search, dhikr counter state, loading/error states, onboarding flag, category progress. Persists preferences via SharedPreferences with debounced writes (300ms for prefs, 500ms for dhikr counts).
-- `PrayerTimeProvider` — GPS-based prayer time calculation (adhan package, Umm Al-Qura method, Shafi madhab), per-prayer notification toggles, notification scheduling (batched 30 at a time), next prayer detection with countdown.
+**State management:** Provider (`ChangeNotifierProvider`). Three providers are mounted at app root in `main.dart`:
 
-**Notification system:** `NotificationService` is a singleton (`NotificationService.instance`) that wraps `flutter_local_notifications`. `PrayerScheduler` calculates prayer times, stores per-prayer notification toggles, and maintains 8 future occurrences per enabled prayer (40 max pending prayer notifications) to guarantee at least 7 future days with one refill buffer. Custom Android adhan sounds are used (`y1000` raw resource for standard prayers, and `y1001` raw resource exclusively for Fajr). iOS uses native `UNUserNotificationCenter` scheduling but needs Apple-compliant short notification sound assets under 30 seconds for custom Adhan playback; long MP3 Adhan files will not reliably play as iOS local notification sounds. A `Workmanager` periodic task refreshes prayer schedules every 12h in the background (entry point: `prayerRefreshCallbackDispatcher` in `main.dart`). Android native `AlarmManager` schedules a post-prayer refill alarm 90 seconds after the next prayer, and Android/iOS native bridges keep prayer schedules refreshed while the app is closed.
+- `AppSettingsProvider` (`core/app_settings_provider.dart`) — app-wide user preferences: theme mode (system/light/dark, with legacy `isDark` migration), adhkar font size (14–32), and the onboarding-completed flag. Persists via SharedPreferences with debounced writes (300ms).
+- `AdhkarProvider` (`features/adhkar/adhkar_provider.dart`) — adhkar data (loaded from `assets/adhkar.json`), search, favorites (with legacy hashCode-ID migration), the daily-reset dhikr counter, loading/error states, and category progress. Persists favorites immediately and dhikr counts with a 500ms debounce.
+- `PrayerTimeProvider` (`features/prayer_times/prayer_time_provider.dart`) — GPS-based prayer time calculation (adhan package, Umm Al-Qura method, Shafi madhab), per-prayer notification toggles, notification scheduling, next prayer detection with countdown.
 
-**Navigation:** `MainNavigationScreen` uses a bottom `NavigationBar` with 6 tabs: Home (default, index 0), Quran, Qibla, Favorites, Prayer Times, Settings. Tab switches away from Home clear the search query. Body uses `AnimatedSwitcher` for 250ms fade transitions.
+**Notification system:** `NotificationService` is a singleton (`NotificationService.instance`) that wraps `flutter_local_notifications`. `PrayerScheduler` calculates prayer times, stores per-prayer notification toggles, and maintains 8 future occurrences per enabled prayer (40 max pending prayer notifications) to guarantee at least 7 future days with one refill buffer. Custom Android adhan sounds are used (`y1000` raw resource for standard prayers, and `y1001` raw resource exclusively for Fajr). iOS uses native `UNUserNotificationCenter` scheduling but needs Apple-compliant short notification sound assets under 30 seconds for custom Adhan playback; long MP3 Adhan files will not reliably play as iOS local notification sounds. A `Workmanager` periodic task refreshes prayer schedules every 12h in the background (entry point: `prayerRefreshCallbackDispatcher` in `lib/app/bootstrap.dart`). Android native `AlarmManager` schedules a post-prayer refill alarm 90 seconds after the next prayer, and Android/iOS native bridges keep prayer schedules refreshed while the app is closed. All platform-service startup (`initializeAppServices`) lives in `lib/app/bootstrap.dart`, not `main.dart`, so screens never need to import the entry point.
 
-**Splash & onboarding:** The app launches directly into `SplashScreen` without delay. It initializes background services (timezone, notifications, Workmanager) and loads provider data concurrently, navigating immediately once they are ready (maximum 5s timeout). First-launch users are routed to a 3-step onboarding carousel before reaching the main screen.
+**Navigation:** `MainNavigationScreen` (in `lib/app/screens/`) uses a bottom `NavigationBar` with 6 tabs: Home (default, index 0), Quran, Qibla, Favorites, Prayer Times, Settings. Tab switches away from Home clear the search query. Body uses `AnimatedSwitcher` for 250ms fade transitions.
 
-**Fonts:** Three font families are in play:
+**Splash & onboarding:** The app launches directly into `SplashScreen` without delay. It initializes background services (timezone, notifications, Workmanager) and loads provider data concurrently, navigating immediately once they are ready (maximum 5s timeout). First-launch users are routed to the onboarding carousel before reaching the main screen.
+
+**Fonts:** Font families in play:
 
 - `TheYearofHandicrafts` (bundled) — UI text (titles, headlines, buttons, labels, and standard content / description body text) with structured Material 3 weight tiers (Black 900, Bold 700, SemiBold 600, Medium 500, Regular 400).
 - `alnasakh` (bundled) — standard, non-Quranic adhkar/supplication text (applied exclusively via `AppTheme.zekrStyle()`).
 - `UthmanicHafs` (bundled) — Quranic verses (selected when `AdhkarModel.isQuranicFont` is true; strictly preserved without alterations).
-- `QCF2001` through `QCF2604` (bundled as assets under `assets/fonts/QCF2BSMLfonts/`) — Quran page-specific glyph fonts loaded on demand by `QuranPageFontLoader` and resolved with `AppTheme.getQuranPageFont(pageNumber)`.
+- `QCF2001` through `QCF2604` (bundled as assets under `assets/fonts/QCF2BSMLfonts/`) — Quran page-specific glyph fonts loaded on demand by `QuranPageFontLoader` and resolved with `quranPageFontFamily(pageNumber)` from `lib/features/quran/data/static/mushaf_page_mapping.dart`.
 
 Use `AppTheme.zekrStyle()` to get the correct TextStyle for adhkar text based on the font attribute.
 
-**Theming:** Material 3 with `ColorScheme.fromSeed` using emerald green (`0xFF10B981`) as seed color. Light, dark, and system-follow themes are defined in `AppTheme`. The M3 type scale and shape tokens are fully specified there.
+**Theming:** Material 3 with `ColorScheme.fromSeed` using emerald green (`0xFF10B981`) as seed color. Light, dark, and system-follow themes are defined in `AppTheme` (`lib/core/theme/`). The M3 type scale and shape tokens are fully specified there.
 
-**Icons:** The app uses Iconsax icons from the `icons_plus` package, aliased through `OctIcons` in `lib/theme/app_icons.dart`.
+**Icons:** The app uses Iconsax icons from the `icons_plus` package, aliased through `OctIcons` in `lib/core/theme/app_icons.dart`.
 
 **Quran feature foundation:** Quran work lives under `lib/features/quran` and follows Clean Architecture boundaries. Domain entities and repository contracts live under `domain`; SQLite access, row mapping, repository implementation, and static surah metadata live under `data`; screens, widgets, and formatting helpers live under `presentation`. `QuranDatabaseHelper` copies `assets/db/quran.db` on first launch, replaces an outdated copied database if its schema is missing QCF data, opens it read-only, and validates the inspected `quran_text` schema before use. The schema report is maintained at `docs/quran_db_schema_report.md`; update it if the bundled database changes.
 
@@ -83,41 +86,46 @@ Use `AppTheme.zekrStyle()` to get the correct TextStyle for adhkar text based on
 - Timezone is configured at startup via `flutter_timezone` + `timezone` package; fallback to UTC on failure
 - Notification IDs use a `(prayerId * 100) + occurrenceOffset` scheme to avoid collisions across prayers and the rolling 8-occurrence window
 - AdhkarModel IDs use stable index-based scheme (`adhkar_<index>`) — migrated from legacy `zekr.hashCode` via `_migrateFavoritesIfNeeded()` on first launch after update
-- SharedPreferences keys are centralized in `_PrefKeys` class within `app_provider.dart`
+- SharedPreferences keys are centralized: adhkar keys in `_PrefKeys` (`features/adhkar/adhkar_provider.dart`), settings keys in `AppSettingsProvider` (`core/app_settings_provider.dart`), bookmark keys in `QuranBookmarkStore`
 - Lint rules: `package:flutter_lints/flutter.yaml` (analysis_options.yaml)
 - Android requires core library desugaring (configured in `android/app/build.gradle.kts`)
 - JSON parse validates required fields (`zekr`, `category`) and skips malformed entries with warnings
+- Dependency rules: `features/*` may import `core/*` and its own internals only. `app/*` (shell) composes feature screens. Only the Settings screen (app-level actions) may import another feature's provider. `core/*` must not import features.
 
 ## File Structure
 
 ```
 lib/
-├── main.dart                          # App entry, timezone, WorkManager, MultiProvider
-├── models/
-│   └── adhkar_model.dart              # Data model with stable IDs, validation, migration map
-├── providers/
-│   ├── app_provider.dart              # Adhkar, favorites, dhikr counts, theme, search, loading state
-│   └── prayer_time_provider.dart      # Prayer calc, GPS, notifications, next prayer detection
-├── services/
-│   ├── notification_service.dart      # Notification scheduling singleton
-│   └── prayer_scheduler.dart          # Prayer calc, rolling schedule window, native bridge payloads
-├── screens/
-│   ├── splash_screen.dart             # Adaptive splash (data-readiness based)
-│   ├── onboarding_screen.dart         # First-launch 3-step carousel
-│   ├── main_navigation_screen.dart    # 6-tab NavigationBar with standalone Quran destination
-│   ├── home_screen.dart               # Adhkar quick-access + category grid + loading/error states
-│   ├── category_adhkar_screen.dart    # Category list with progress header
-│   ├── favorites_screen.dart          # Favorites list with count
-│   ├── prayer_times_screen.dart       # Prayer toggles + next prayer countdown
-│   ├── settings_screen.dart           # Font slider+preview, theme segmented, about, reset
-│   └── qibla_compass_page.dart        # Compass with Arabic cardinals
-├── widgets/
-│   ├── adhkar_card.dart               # Card + detail sheet + dhikr counter + undo SnackBar
-│   └── category_card.dart             # Grid card with progress bar
-├── theme/
-│   ├── app_theme.dart                 # M3 theme config + bundled UI font
-│   └── app_icons.dart                 # Iconsax icon aliases
+├── main.dart                          # App entry + MultiProvider composition
+├── app/
+│   ├── bootstrap.dart                 # initializeAppServices, WorkManager callback, platform startup
+│   └── screens/
+│       ├── splash_screen.dart         # Adaptive splash (data-readiness based)
+│       ├── onboarding_screen.dart     # First-launch carousel
+│       └── main_navigation_screen.dart # 6-tab NavigationBar shell
+├── core/
+│   ├── app_settings_provider.dart     # Theme mode, adhkar font size, onboarding flag
+│   ├── theme/
+│   │   ├── app_theme.dart             # M3 theme config, bundled fonts, zekrStyle
+│   │   └── app_icons.dart             # Iconsax icon aliases (OctIcons)
+│   └── utils/
+│       └── arabic_number_formatter.dart # Western -> Arabic-Indic digits
 └── features/
+    ├── adhkar/
+    │   ├── adhkar_provider.dart        # Data, search, favorites, dhikr counts, progress
+    │   ├── models/adhkar_model.dart    # Stable IDs, validation, legacy migration map
+    │   ├── screens/                    # home, category_adhkar, favorites
+    │   └── widgets/                    # adhkar_card, dhikr_detail_sheet, category_card
+    ├── prayer_times/
+    │   ├── prayer_time_provider.dart   # Prayer calc state, toggles, countdown
+    │   ├── screens/prayer_times_screen.dart # Toggles + next prayer + timeline
+    │   ├── services/                   # prayer_scheduler, notification_service, timezone_service
+    │   └── utils/arabic_time_formatter.dart
+    ├── qibla/
+    │   └── qibla_compass_page.dart     # Compass with Arabic cardinals
+    ├── settings/
+    │   ├── screens/settings_screen.dart # Font slider+preview, theme segmented, about, reset
+    │   └── widgets/rate_app_card.dart
     └── quran/
         ├── domain/
         │   ├── entities/              # Surah, Verse, and PageInfo entities
@@ -127,12 +135,18 @@ lib/
         │   ├── local/                 # SQLite DB helper and local data source
         │   ├── models/                # SQLite row mappers
         │   ├── repositories/          # QuranRepository implementation
-        │   └── static/                # 114-surah metadata + 604-page Mushaf map
+        │   └── static/                # 114-surah metadata + 604-page Mushaf map + QCF font resolver
         └── presentation/
             ├── actions/               # Typed verse action commands and controller
             ├── screens/               # Quran index route/section and surah reader
-            ├── utils/                 # Arabic number and verse action formatting
+            ├── utils/                 # Verse action formatting, bookmark store, font loader
             └── widgets/               # Quran text page, share card, states, action sheet
+
+test/
+├── core/                              # AppSettingsProvider + formatters tests
+└── features/
+    ├── adhkar/                        # Model parsing + provider (favorites/dhikr/search) tests
+    └── quran/                          # Mushaf page mapping tests
 ```
 
 ## Redesign Roadmap

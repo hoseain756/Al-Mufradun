@@ -2,6 +2,13 @@ import '../../domain/entities/page_info.dart';
 
 const int kMushafPageCount = 604;
 
+/// Resolves the QCF2 page-specific glyph font family for [pageNumber].
+/// Format: QCF2{pageNumber padded to 3 digits} (e.g., QCF2001).
+String quranPageFontFamily(int pageNumber) {
+  final pageStr = pageNumber.toString().padLeft(3, '0');
+  return 'QCF2$pageStr';
+}
+
 const List<PageInfo> kMushafPageInfo = [
   PageInfo(pageNumber: 1, startSura: 1, startAya: 1),
   PageInfo(pageNumber: 2, startSura: 2, startAya: 1),

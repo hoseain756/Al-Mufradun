@@ -5,7 +5,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		    <string>AlMufradun</string>
+		<string>AlMufradun</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -25,6 +25,14 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 
+		<!-- Launch screen: enables native full-screen rendering on all modern
+		     iPhones (no letterboxing). Without this, iOS runs the app in
+		     compatibility mode with black bars. -->
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UILaunchScreen</key>
+		<dict/>
+
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>
 		<key>UISupportedInterfaceOrientations</key>
@@ -40,20 +48,46 @@
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
+		<key>UIStatusBarHidden</key>
+		<false/>
+
+		<!-- Background modes for periodic prayer-schedule refresh. -->
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>fetch</string>
 			<string>processing</string>
 		</array>
+		<!-- workmanager.background.task is the hardcoded BGTaskScheduler
+		     identifier used by the workmanager iOS plugin; without it the
+		     periodic refresh task is rejected by iOS at scheduling time. -->
 		<key>BGTaskSchedulerPermittedIdentifiers</key>
 		<array>
+			<string>workmanager.background.task</string>
 			<string>com.hussein.almufradun.prayer.refresh</string>
 		</array>
-		<key>UIStatusBarHidden</key>
-		<false/>
 
 		<!-- Location permission: needed for prayer times and Qibla calculation -->
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>نحتاج إلى موقعك لحساب أوقات الصلاة واتجاه القبلة بدقة</string>
+		<!-- Prompt text if the app ever needs temporary full accuracy. -->
+		<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+		<dict>
+			<key>PrayerAndQiblaAccuracy</key>
+			<string>نحتاج إلى دقة الموقع الكاملة لحساب أوقات الصلاة واتجاه القبلة بدقة</string>
+		</dict>
+
+		<!-- URL schemes the app may pre-flight via url_launcher canLaunchUrl.
+		     Fixes rate-app store link and external links failing on iOS. -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>https</string>
+			<string>itms-apps</string>
+			<string>mailto</string>
+			<string>tel</string>
+		</array>
+
+		<!-- No non-exempt encryption used; avoids export-compliance friction. -->
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 	</dict>
 </plist>

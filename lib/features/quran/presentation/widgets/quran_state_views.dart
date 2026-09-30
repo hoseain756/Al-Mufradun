@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_icons.dart';
+import '../../../../core/theme/app_icons.dart';
 
 class QuranLoadingView extends StatelessWidget {
   const QuranLoadingView({super.key, this.message = 'جاري تحميل السورة...'});
