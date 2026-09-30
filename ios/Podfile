@@ -37,6 +37,19 @@ target 'Runner' do
   end
 end
 
+def patch_spm_package_manifest
+  spm_pkg_dir = File.expand_path(File.join(File.dirname(__FILE__), 'Flutter', 'ephemeral', 'Packages'))
+  if Dir.exist?(spm_pkg_dir)
+    Dir.glob(File.join(spm_pkg_dir, '**', 'Package.swift')).each do |pkg_path|
+      content = File.read(pkg_path)
+      updated = content.gsub(/\.iOS\("1[1234]\.0"\)/, '.iOS("15.0")')
+      File.write(pkg_path, updated) if content != updated
+    end
+  end
+end
+
+patch_spm_package_manifest
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
@@ -44,4 +57,7 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
   end
+
+  # Force iOS 15.0 on FlutterGeneratedPluginSwiftPackage to satisfy CocoaLumberjack
+  patch_spm_package_manifest
 end
