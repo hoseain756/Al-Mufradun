@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/native/liquid_glass.dart';
 import '../../../core/utils/arabic_number_formatter.dart';
 import '../prayer_time_provider.dart';
 import '../services/prayer_scheduler.dart';
@@ -150,10 +152,19 @@ class _PrayerControlStrip extends StatelessWidget {
                 ),
               ),
             ),
-            Switch(
-              value: allEnabled,
-              onChanged: onToggleAll,
-            ),
+            useNativeIOSSystemUI
+                ? LiquidGlassToggle(
+                    value: allEnabled,
+                    onChanged: (v) => onToggleAll(v),
+                  )
+                : Switch(
+                    value: allEnabled,
+                    onChanged: onToggleAll,
+                  ),
+            // On iOS the master toggle becomes a native UISwitch; the
+            // per-prayer rows below stay Material because repeated list
+            // rows containing platform views are explicitly discouraged
+            // by the package for performance reasons.
           ],
         ),
       ),

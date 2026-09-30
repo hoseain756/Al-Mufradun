@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:provider/provider.dart';
-import '../adhkar_provider.dart';
+import '../../../core/native/liquid_glass.dart';
 import '../../../core/theme/app_icons.dart';
+import '../adhkar_provider.dart';
 import '../widgets/adhkar_card.dart';
-import './category_adhkar_screen.dart';
 import '../widgets/category_card.dart';
+import './category_adhkar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,12 +17,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final LiquidGlassSearchBarController _nativeSearchController =
+      LiquidGlassSearchBarController();
+  String? _lastSyncedSearchQuery;
 
   @override
   void initState() {
     super.initState();
     final provider = context.read<AdhkarProvider>();
     _searchController.text = provider.searchQuery;
+    _lastSyncedSearchQuery = provider.searchQuery;
   }
 
   @override
@@ -38,14 +44,185 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  List<Widget> _bodySlivers(
+    AdhkarProvider provider,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    final isSearching = provider.searchQuery.isNotEmpty;
+    return [
+      // Loading state
+      if (provider.isLoading)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'جاري تحميل الأذكار...',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+
+      // Error state
+      else if (provider.loadError != null)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  OctIcons.alert,
+                  size: 64,
+                  color: colorScheme.error.withValues(alpha: 0.6),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  provider.loadError!,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonalIcon(
+                  onPressed: () => provider.loadAdhkarData(),
+                  icon: const Icon(OctIcons.sync, size: 18),
+                  label: const Text('إعادة المحاولة'),
+                ),
+              ],
+            ),
+          ),
+        )
+
+      // Search results
+      else if (isSearching) ...[
+        if (provider.filteredAdhkarList.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    OctIcons.search,
+                    size: 64,
+                    color: colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'لا توجد نتائج',
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return AdhkarCard(
+                      item: provider.filteredAdhkarList[index]);
+                },
+                childCount: provider.filteredAdhkarList.length,
+              ),
+            ),
+          ),
+      ]
+
+      // Normal: category grid
+      else ...[
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.9,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final category = provider.categories[index];
+                return CategoryCard(
+                  category: category,
+                  onTap: () => _openCategory(context, category),
+                );
+              },
+              childCount: provider.categories.length,
+            ),
+          ),
+        ),
+        const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AdhkarProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isSearching = provider.searchQuery.isNotEmpty;
+    final theme = Theme.of(context);
 
-    // Sync controller with provider (e.g. after tab-switch clears search)
+    // Sync provider search text into the native search bar after each
+    // frame (avoids an in-loop setState; the native bar's internal text
+    // stays in sync with the provider even after a tab switch).
+    if (_lastSyncedSearchQuery != provider.searchQuery) {
+      _lastSyncedSearchQuery = provider.searchQuery;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_lastSyncedSearchQuery != provider.searchQuery) return;
+        _nativeSearchController.setText(provider.searchQuery);
+      });
+    }
+
+    // iOS: native Liquid Glass chrome above the scrollable body.
+    if (useNativeIOSSystemUI) {
+      return Column(
+        children: [
+          LiquidGlassNavigationBar(
+            title: 'الـمـفردون',
+            brightness: theme.brightness,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: LiquidGlassSearchBar(
+              placeholder: 'بحث في الأذكار...',
+              controller: _nativeSearchController,
+              onChanged: (value) => provider.setSearchQuery(value),
+              onCancelTap: () {
+                provider.clearSearch();
+                _nativeSearchController.setText('');
+              },
+              expandable: true,
+            ),
+          ),
+          Expanded(
+            child: CustomScrollView(
+              slivers: _bodySlivers(provider, colorScheme, textTheme),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Android / web / desktop – original Material implementation.
     if (_searchController.text != provider.searchQuery) {
       _searchController.text = provider.searchQuery;
       _searchController.selection = TextSelection.fromPosition(
@@ -105,130 +282,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-
-        // Loading state
-        if (provider.isLoading)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'جاري تحميل الأذكار...',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-
-        // Error state
-        else if (provider.loadError != null)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    OctIcons.alert,
-                    size: 64,
-                    color: colorScheme.error.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    provider.loadError!,
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.tonalIcon(
-                    onPressed: () => provider.loadAdhkarData(),
-                    icon: const Icon(OctIcons.sync, size: 18),
-                    label: const Text('إعادة المحاولة'),
-                  ),
-                ],
-              ),
-            ),
-          )
-
-        // Search results
-        else if (isSearching) ...[
-          if (provider.filteredAdhkarList.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      OctIcons.search,
-                      size: 64,
-                      color:
-                          colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'لا توجد نتائج',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    return AdhkarCard(item: provider.filteredAdhkarList[index]);
-                  },
-                  childCount: provider.filteredAdhkarList.length,
-                ),
-              ),
-            ),
-        ]
-
-        // Normal: quick-access + category grid
-        else ...[
-          // Category grid
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.9,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final category = provider.categories[index];
-                  return CategoryCard(
-                    category: category,
-                    onTap: () => _openCategory(context, category),
-                  );
-                },
-                childCount: provider.categories.length,
-              ),
-            ),
-          ),
-
-          const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
-        ],
+        ..._bodySlivers(provider, colorScheme, textTheme),
       ],
     );
   }
 }
+
 
 

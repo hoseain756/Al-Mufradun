@@ -27,11 +27,11 @@
 
 		<!-- Launch screen: enables native full-screen rendering on all modern
 		     iPhones (no letterboxing). Without this, iOS runs the app in
-		     compatibility mode with black bars. -->
+		     compatibility mode with black bars. Do NOT also declare the
+		     empty UILaunchScreen dict key: having both keys is ambiguous
+		     and some SDKs then fall back to compatibility letterboxing. -->
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
-		<key>UILaunchScreen</key>
-		<dict/>
 
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_icons.dart';
@@ -10,6 +11,13 @@ class RateAppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // No App Store ID exists for this app yet, so the rating flow is
+    // Android-only. Rendering the card on iOS would silently fail on iOS
+    // (the Google Play link cannot open a review destination there).
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return const SizedBox.shrink();
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 

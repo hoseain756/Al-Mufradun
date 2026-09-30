@@ -4,6 +4,7 @@ import 'package:adhkar_viewer/features/adhkar/adhkar_provider.dart';
 import 'package:adhkar_viewer/features/prayer_times/prayer_time_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -44,6 +45,9 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: settings.themeMode,
+          // Fades native Liquid Glass views out while Flutter popup routes
+          // (dialogs, bottom sheets) are above them, and restores them after.
+          navigatorObservers: [LiquidGlassNavigatorObserver()],
           locale: const Locale('ar'),
           supportedLocales: const [Locale('ar')],
           localizationsDelegates: const [

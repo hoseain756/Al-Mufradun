@@ -3,8 +3,10 @@ import 'dart:math' show pi, cos, sin;
 import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:adhan/adhan.dart'; //  Added for accurate Qibla calculation
+import '../../core/native/liquid_glass.dart';
 import '../../core/theme/app_icons.dart';
 
 /// Qibla Compass Page
@@ -55,7 +57,10 @@ class _QiblaCompassPageState extends State<QiblaCompassPage> {
 
     // iOS only surfaces the system permission prompt when explicitly asked;
     // auto-request once on denial so the compass is not stuck loading.
-    if (status.isDenied && !_permissionRequested) {
+    // permanentlyDenied must NOT trigger another request(): iOS ignores
+    // repeat prompts and app review flags them. Instead surface the status
+    // so the UI can offer a direct link to the system Settings app.
+    if (status.isDenied && !status.isPermanentlyDenied && !_permissionRequested) {
       _permissionRequested = true;
       await _requestPermission();
       return;
@@ -82,28 +87,18 @@ class _QiblaCompassPageState extends State<QiblaCompassPage> {
   }
 
   void _showPermissionDeniedDialog() {
-    showDialog(
+    showAdaptiveAlert(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('إذن الموقع مطلوب'),
-        content: const Text(
+      title: 'إذن الموقع مطلوب',
+      message:
           'يحتاج التطبيق إلى إذن الموقع لحساب اتجاه القبلة. يرجى تفعيله من إعدادات النظام.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-              Navigator.pop(context);
-            },
-            child: const Text('الإعدادات'),
-          ),
-        ],
-      ),
-    );
+      actions: const [
+        AdaptiveAlertAction(id: 'settings', title: 'الإعدادات'),
+        AdaptiveAlertAction(id: 'cancel', title: 'إلغاء', isCancel: true),
+      ],
+    ).then((id) {
+      if (id == 'settings') openAppSettings();
+    });
   }
 
   @override
@@ -111,10 +106,21 @@ class _QiblaCompassPageState extends State<QiblaCompassPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('اتجاه القبلة'),
-        centerTitle: true,
-      ),
+      appBar: useNativeIOSSystemUI
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(56),
+              child: SafeArea(
+                bottom: false,
+                child: LiquidGlassNavigationBar(
+                  title: 'اتجاه القبلة',
+                  brightness: Theme.of(context).brightness,
+                ),
+              ),
+            )
+          : AppBar(
+              title: const Text('اتجاه القبلة'),
+              centerTitle: true,
+            ),
       body: Container(
         alignment: Alignment.center,
         padding: const EdgeInsets.all(16.0),
@@ -177,6 +183,15 @@ class _QiblaCompassPageState extends State<QiblaCompassPage> {
               : _requestPermission,
           child: Text(status?.enabled == false ? "تحديث" : "السماح بالوصول"),
         ),
+        // Recovery path for deniedForever: iOS will never re-show the
+        // permission prompt, so send the user straight to system Settings.
+        if (status?.status.isPermanentlyDenied == true) ...[
+          const SizedBox(height: 8),
+          const TextButton(
+            onPressed: openAppSettings,
+            child: Text("فتح إعدادات النظام"),
+          ),
+        ],
       ],
     );
   }
@@ -205,7 +220,30 @@ class _QiblahCompassWidgetState extends State<_QiblahCompassWidget> {
   /// Calculates the accurate Qibla bearing using the adhan package
   Future<void> _calculateManualBearing() async {
     try {
-      Position position = await Geolocator.getCurrentPosition();
+      // If the user granted "reduced" accuracy, ask once for temporary full
+      // accuracy (purpose key declared in Info.plist). Best-effort: any
+      // failure here simply means we continue with reduced accuracy.
+      try {
+        final accuracy = await Geolocator.getLocationAccuracy();
+        if (accuracy == LocationAccuracyStatus.reduced) {
+          await Geolocator.requestTemporaryFullAccuracy(
+            purposeKey: 'PrayerAndQiblaAccuracy',
+          );
+        }
+      } catch (_) {
+        // Temporary-accuracy flow is unavailable (e.g. non-iOS); continue.
+      }
+
+      // Prefer a cached fix to avoid a GPS cold-start; otherwise request an
+      // explicit high-accuracy reading capped at 15s so iOS can never hang
+      // the compass screen indefinitely on a weak fix.
+      Position position = await Geolocator.getLastKnownPosition() ??
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 15),
+            ),
+          );
       final coordinates = Coordinates(position.latitude, position.longitude);
       final qibla = Qibla(coordinates);
 

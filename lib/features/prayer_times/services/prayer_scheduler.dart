@@ -363,10 +363,24 @@ class PrayerScheduler {
         return _cachedCoordinatesOrThrow(prefs);
       }
 
+      // If the user granted "reduced" accuracy, request temporary full
+      // accuracy once so prayer times are calculated for the true location
+      // (purpose key declared in Info.plist). Best-effort only.
+      try {
+        final accuracy = await Geolocator.getLocationAccuracy();
+        if (accuracy == LocationAccuracyStatus.reduced) {
+          await Geolocator.requestTemporaryFullAccuracy(
+            purposeKey: 'PrayerAndQiblaAccuracy',
+          );
+        }
+      } catch (_) {
+        // Temporary-accuracy flow is unavailable (e.g. Android); continue.
+      }
+
       Position? position = await Geolocator.getLastKnownPosition();
       position ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
+          accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 30),
         ),
       );

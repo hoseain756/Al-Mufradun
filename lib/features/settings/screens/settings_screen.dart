@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:provider/provider.dart';
 import '../../../core/app_settings_provider.dart';
+import '../../../core/native/liquid_glass.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../adhkar/adhkar_provider.dart';
@@ -54,16 +56,30 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Slider(
-                          value: settings.fontSize,
-                          min: 14.0,
-                          max: 32.0,
-                          divisions: 9,
-                          label: settings.fontSize.toStringAsFixed(0),
-                          onChanged: (value) {
-                            settings.adjustFontSize(value - settings.fontSize);
-                          },
-                        ),
+                        useNativeIOSSystemUI
+                            ? LiquidGlassSlider(
+                                value: settings.fontSize,
+                                min: 14.0,
+                                max: 32.0,
+                                step: 2.0,
+                                onChanged: (value) {
+                                  settings.adjustFontSize(
+                                    value - settings.fontSize,
+                                  );
+                                },
+                              )
+                            : Slider(
+                                value: settings.fontSize,
+                                min: 14.0,
+                                max: 32.0,
+                                divisions: 9,
+                                label: settings.fontSize.toStringAsFixed(0),
+                                onChanged: (value) {
+                                  settings.adjustFontSize(
+                                    value - settings.fontSize,
+                                  );
+                                },
+                              ),
                         const SizedBox(height: 16),
                         // Live preview
                         Container(
@@ -130,26 +146,44 @@ class SettingsScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
-                          child: SegmentedButton<ThemeMode>(
-                            segments: const [
-                              ButtonSegment(
-                                value: ThemeMode.system,
-                                label: Text('تلقائي'),
-                              ),
-                              ButtonSegment(
-                                value: ThemeMode.light,
-                                label: Text('فاتح'),
-                              ),
-                              ButtonSegment(
-                                value: ThemeMode.dark,
-                                label: Text('داكن'),
-                              ),
-                            ],
-                            selected: {settings.themeMode},
-                            onSelectionChanged: (selected) {
-                              settings.setThemeMode(selected.first);
-                            },
-                          ),
+                          child: useNativeIOSSystemUI
+                              ? LiquidGlassSegmentedControl(
+                                  labels: const ['تلقائي', 'فاتح', 'داكن'],
+                                  selectedIndex: switch (settings.themeMode) {
+                                    ThemeMode.system => 0,
+                                    ThemeMode.light => 1,
+                                    ThemeMode.dark => 2,
+                                  },
+                                  onValueChanged: (i) {
+                                    settings.setThemeMode(
+                                      switch (i) {
+                                        0 => ThemeMode.system,
+                                        1 => ThemeMode.light,
+                                        _ => ThemeMode.dark,
+                                      },
+                                    );
+                                  },
+                                )
+                              : SegmentedButton<ThemeMode>(
+                                  segments: const [
+                                    ButtonSegment(
+                                      value: ThemeMode.system,
+                                      label: Text('تلقائي'),
+                                    ),
+                                    ButtonSegment(
+                                      value: ThemeMode.light,
+                                      label: Text('فاتح'),
+                                    ),
+                                    ButtonSegment(
+                                      value: ThemeMode.dark,
+                                      label: Text('داكن'),
+                                    ),
+                                  ],
+                                  selected: {settings.themeMode},
+                                  onSelectionChanged: (selected) {
+                                    settings.setThemeMode(selected.first);
+                                  },
+                                ),
                         ),
                       ],
                     ),
@@ -176,34 +210,34 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     trailing: Icon(OctIcons.arrow_right,
                         size: 18, color: colorScheme.onSurfaceVariant),
-                    onTap: () {
-                      showDialog(
+                    onTap: () async {
+                      final result = await showAdaptiveAlert(
                         context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('إعادة تعيين العدادات'),
-                          content: const Text(
+                        title: 'إعادة تعيين العدادات',
+                        message:
                             'هل أنت متأكد من إعادة تعيين جميع عدادات الأذكار؟',
+                        actions: const [
+                          AdaptiveAlertAction(
+                            id: 'reset',
+                            title: 'إعادة تعيين',
+                            isDestructive: true,
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('إلغاء'),
-                            ),
-                            FilledButton(
-                              onPressed: () {
-                                adhkar.resetAllDhikrCounts();
-                                Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('تم إعادة تعيين جميع العدادات'),
-                                  ),
-                                );
-                              },
-                              child: const Text('إعادة تعيين'),
-                            ),
-                          ],
-                        ),
+                          AdaptiveAlertAction(
+                            id: 'cancel',
+                            title: 'إلغاء',
+                            isCancel: true,
+                          ),
+                        ],
                       );
+                      if (result == 'reset') {
+                        adhkar.resetAllDhikrCounts();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('تم إعادة تعيين جميع العدادات'),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),
@@ -229,39 +263,13 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     onTap: () {
-                      showDialog(
+                      showAdaptiveAlert(
                         context: context,
-                        builder: (ctx) => AlertDialog(
-                          icon: Icon(
-                            OctIcons.book,
-                            size: 48,
-                            color: colorScheme.primary,
-                          ),
-                          title: const Text('المفردون'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'الإصدار 1.0.0',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'تطبيق الأذكار والأدعية اليومية',
-                                style: textTheme.bodyMedium,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('إغلاق'),
-                            ),
-                          ],
-                        ),
+                        title: 'المفردون — الإصدار 1.0.0',
+                        message: 'تطبيق الأذكار والأدعية اليومية',
+                        actions: const [
+                          AdaptiveAlertAction(id: 'close', title: 'إغلاق'),
+                        ],
                       );
                     },
                   ),

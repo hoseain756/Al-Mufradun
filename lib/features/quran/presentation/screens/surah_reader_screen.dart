@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
+import '../../../../core/native/liquid_glass.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/quran_repository_factory.dart';
@@ -310,70 +312,116 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
               top: _showControls ? 0.0 : -110.0,
               left: 0.0,
               right: 0.0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface.withValues(alpha: 0.85),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: SafeArea(
+              child: useNativeIOSSystemUI
+                  ? SafeArea(
                       bottom: false,
-                      child: SizedBox(
-                        height: 56,
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(OctIcons.arrow_right),
-                              tooltip: 'رجوع',
-                              onPressed: () => Navigator.pop(context),
+                      child: LiquidGlassNavigationBar(
+                        title: 'سورة $surahName',
+                        brightness: theme.brightness,
+                        leadingItems: const [
+                          LiquidGlassNavBarItem(
+                            id: 'back',
+                            icon: NativeLiquidGlassIcon.sfSymbol(
+                              'chevron.right',
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'سورة $surahName',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: AppTheme.handicraftsFont,
-                                  color: colorScheme.onSurface,
-                                ),
-                                textAlign: TextAlign.right,
+                            label: 'رجوع',
+                          ),
+                        ],
+                        trailingItems: [
+                          LiquidGlassNavBarItem(
+                            id: _lastBookmark == null ? 'bookmark' : 'bookmark.fill',
+                            icon: NativeLiquidGlassIcon.sfSymbol(
+                              _lastBookmark == null
+                                  ? 'bookmark'
+                                  : 'bookmark.fill',
+                            ),
+                            label: 'الآيات المحفوظة',
+                          ),
+                          LiquidGlassNavBarItem(
+                            id: 'search',
+                            icon: NativeLiquidGlassIcon.sfSymbol('magnifyingglass'),
+                            label: 'بحث',
+                          ),
+                        ],
+                        onItemTapped: (id) {
+                          switch (id) {
+                            case 'back':
+                              Navigator.pop(context);
+                            case 'search':
+                              _openSearch();
+                            case 'bookmark':
+                            case 'bookmark.fill':
+                              _openBookmarks();
+                          }
+                        },
+                      ),
+                    )
+                  : ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface.withValues(alpha: 0.85),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: colorScheme.outlineVariant
+                                    .withValues(alpha: 0.5),
+                                width: 1,
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(OctIcons.search),
-                              tooltip: 'بحث',
-                              onPressed: _openSearch,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: SafeArea(
+                            bottom: false,
+                            child: SizedBox(
+                              height: 56,
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(OctIcons.arrow_right),
+                                    tooltip: 'رجوع',
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'سورة $surahName',
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: AppTheme.handicraftsFont,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(OctIcons.search),
+                                    tooltip: 'بحث',
+                                    onPressed: _openSearch,
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(OctIcons.star),
+                                    tooltip: 'الآيات المحفوظة',
+                                    color: _lastBookmark == null
+                                        ? colorScheme.onSurfaceVariant
+                                        : colorScheme.primary,
+                                    onPressed: _openBookmarks,
+                                  ),
+                                ],
+                              ),
                             ),
-                            IconButton(
-                              icon: const Icon(OctIcons.star),
-                              tooltip: 'الآيات المحفوظة',
-                              color: _lastBookmark == null
-                                  ? colorScheme.onSurfaceVariant
-                                  : colorScheme.primary,
-                              onPressed: _openBookmarks,
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
             ),
 
             AnimatedPositioned(
@@ -408,7 +456,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
+children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -443,62 +491,102 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.chevron_left),
-                                  color: colorScheme.primary,
-                                  onPressed: _currentPageNumber < kMushafPageCount
-                                      ? () => _goToPage(_currentPageNumber + 1)
-                                      : null,
-                                ),
-                                Expanded(
-                                  child: SliderTheme(
-                                    data: SliderTheme.of(context).copyWith(
-                                      trackHeight: 4,
-                                      activeTrackColor: colorScheme.primary,
-                                      inactiveTrackColor:
-                                          colorScheme.primary.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      thumbColor: colorScheme.primary,
-                                      thumbShape:
-                                          const RoundSliderThumbShape(
-                                        enabledThumbRadius: 6,
-                                      ),
-                                      overlayColor:
-                                          colorScheme.primary.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                      overlayShape:
-                                          const RoundSliderOverlayShape(
-                                        overlayRadius: 14,
+                            useNativeIOSSystemUI
+                                ? Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_left),
+                                      color: colorScheme.primary,
+                                      onPressed: _currentPageNumber <
+                                              kMushafPageCount
+                                          ? () => _goToPage(_currentPageNumber + 1)
+                                          : null,
+                                    ),
+                                    Expanded(
+                                      child: LiquidGlassSlider(
+                                        value: _currentPageNumber
+                                            .toDouble(),
+                                        min: 1,
+                                        max: kMushafPageCount
+                                            .toDouble(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _currentPageNumber =
+                                                value.round();
+                                          });
+                                        },
                                       ),
                                     ),
-                                    child: Slider(
-                                      value: _currentPageNumber.toDouble(),
-                                      min: 1,
-                                      max: kMushafPageCount.toDouble(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _currentPageNumber = value.round();
-                                        });
-                                      },
-                                      onChangeEnd: (value) {
-                                        _goToPage(value.round());
-                                      },
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_right),
+                                      color: colorScheme.primary,
+                                      onPressed: _currentPageNumber > 1
+                                          ? () => _goToPage(_currentPageNumber - 1)
+                                          : null,
                                     ),
-                                  ),
+                                  ],
+                                )
+                                : Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_left),
+                                      color: colorScheme.primary,
+                                      onPressed: _currentPageNumber <
+                                              kMushafPageCount
+                                          ? () => _goToPage(_currentPageNumber + 1)
+                                          : null,
+                                    ),
+                                    Expanded(
+                                      child: SliderTheme(
+                                        data: SliderTheme.of(context)
+                                            .copyWith(
+                                          trackHeight: 4,
+                                          activeTrackColor: colorScheme.primary,
+                                          inactiveTrackColor:
+                                              colorScheme.primary.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                          thumbColor: colorScheme.primary,
+                                          thumbShape:
+                                              const RoundSliderThumbShape(
+                                            enabledThumbRadius: 6,
+                                          ),
+                                          overlayColor:
+                                              colorScheme.primary.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                          overlayShape:
+                                              const RoundSliderOverlayShape(
+                                            overlayRadius: 14,
+                                          ),
+                                        ),
+                                        child: Slider(
+                                          value: _currentPageNumber
+                                              .toDouble(),
+                                          min: 1,
+                                          max: kMushafPageCount
+                                              .toDouble(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _currentPageNumber =
+                                                  value.round();
+                                            });
+                                          },
+                                          onChangeEnd: (value) {
+                                            _goToPage(value.round());
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_right),
+                                      color: colorScheme.primary,
+                                      onPressed: _currentPageNumber > 1
+                                          ? () => _goToPage(_currentPageNumber - 1)
+                                          : null,
+                                    ),
+                                  ],
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.chevron_right),
-                                  color: colorScheme.primary,
-                                  onPressed: _currentPageNumber > 1
-                                      ? () => _goToPage(_currentPageNumber - 1)
-                                      : null,
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),

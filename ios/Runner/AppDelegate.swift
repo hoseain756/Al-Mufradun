@@ -17,6 +17,13 @@ import workmanager_apple
       UNUserNotificationCenter.current().delegate = self
     }
 
+    // Ask iOS to wake the app for background fetches periodically (the fetch
+    // background mode is already declared). Apple ultimately decides when the
+    // fetch actually runs; this is only a minimum-interval hint, not a
+    // guarantee. It complements the BGTaskScheduler/Workmanager registration
+    // below and keeps the adhan notification window topped up while closed.
+    application.setMinimumBackgroundFetchInterval(6 * 60 * 60)
+
     WorkmanagerPlugin.setPluginRegistrantCallback { registry in
       GeneratedPluginRegistrant.register(with: registry)
     }
